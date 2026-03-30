@@ -1,20 +1,23 @@
-/**
- * @module ShiftsPage
- * @description Shift management with card grid view and threshold settings.
- */
 import { useState } from 'react';
 import { Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import ShiftCard from './ShiftCard.jsx';
 import ShiftForm from './ShiftForm.jsx';
-import { useGetShiftsQuery, useCreateShiftMutation, useDeleteShiftMutation } from '../../store/api/shiftApi.js';
+import {
+  useGetShiftsQuery,
+  useCreateShiftMutation,
+  useUpdateShiftMutation,
+  useDeleteShiftMutation,
+} from '../../store/api/shiftApi.js';
+
 export default function ShiftsPage() {
   const [selectedShift, setSelectedShift] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
   const { data, isLoading } = useGetShiftsQuery();
   const [createShift, { isLoading: isCreating }] = useCreateShiftMutation();
+  const [updateShift, { isLoading: isUpdating }] = useUpdateShiftMutation();
   const [deleteShift] = useDeleteShiftMutation();
 
   return (
@@ -42,8 +45,8 @@ export default function ShiftsPage() {
           <ShiftCard
             key={shift.id}
             shift={shift}
-            onEdit={(s) => {
-              setSelectedShift(s);
+            onEdit={(record) => {
+              setSelectedShift(record);
               setShowForm(true);
             }}
             onDelete={(id) => deleteShift(id)}
@@ -55,11 +58,15 @@ export default function ShiftsPage() {
         open={showForm}
         shift={selectedShift}
         onClose={() => setShowForm(false)}
-        onSubmit={(values) => {
-          createShift(values);
+        onSubmit={async (values) => {
+          if (selectedShift?.id) {
+            await updateShift({ id: selectedShift.id, ...values });
+          } else {
+            await createShift(values);
+          }
           setShowForm(false);
         }}
-        loading={isCreating}
+        loading={isCreating || isUpdating || isLoading}
       />
     </div>
   );

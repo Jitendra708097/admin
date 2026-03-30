@@ -1,10 +1,4 @@
-/**
- * @module LoginPage
- * @description Email + password login form for org admin.
- *              Authenticates user, stores tokens in Redux + localStorage.
- *              Redirects to /dashboard on success.
- */
-import { Form, Input, Button, Card, Space, Row, Col, message, Checkbox } from 'antd';
+import { Form, Input, Button, Card, Row, Col, message, Checkbox } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -12,7 +6,6 @@ import { useLoginMutation } from '../../store/api/authApi.js';
 import { setAuth } from '../../store/authSlice.js';
 import { parseApiError } from '../../utils/errorHandler.js';
 import styles from './auth.module.css';
-
 
 export default function LoginPage() {
   const [form] = Form.useForm();
@@ -22,16 +15,21 @@ export default function LoginPage() {
 
   const onFinish = async (values) => {
     try {
-      const response = await login({ email: values.email, password: values.password }).unwrap();
+      const response = await login({
+        email: values.email,
+        password: values.password,
+      }).unwrap();
+
       dispatch(
         setAuth({
-          user: response.user,
+          user: response.employee,
           accessToken: response.accessToken,
           refreshToken: response.refreshToken,
-          org: response.org,
+          org: { id: response.employee.orgId },
         })
       );
-      message.success('Login successful!');
+
+      message.success('Login successful');
       navigate('/dashboard');
     } catch (error) {
       message.error(parseApiError(error));
@@ -47,7 +45,7 @@ export default function LoginPage() {
             <p>Admin Portal</p>
           </div>
 
-          <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={true}>
+          <Form form={form} layout="vertical" onFinish={onFinish}>
             <Form.Item
               name="email"
               label="Email"
@@ -64,7 +62,7 @@ export default function LoginPage() {
               label="Password"
               rules={[{ required: true, message: 'Please enter your password' }]}
             >
-              <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
+              <Input.Password prefix={<LockOutlined />} placeholder="Password" size="large" />
             </Form.Item>
 
             <Form.Item name="remember" valuePropName="checked" initialValue={false}>

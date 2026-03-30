@@ -1,47 +1,69 @@
-/**
- * @module EmployeesPage
- * @description Employee list with search, filters, and bulk upload.
- */
 import { useState } from 'react';
-import { Card, Button, Space, Input, Select, Row, Col } from 'antd';
+import { Card, Button, Input, Select, Row, Col } from 'antd';
 import { PlusOutlined, UploadOutlined, SearchOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import EmployeeTable from './EmployeeTable.jsx';
 import EmployeeForm from './EmployeeForm.jsx';
 import BulkUpload from './BulkUpload.jsx';
 import LeaveBalanceModal from './LeaveBalanceModal.jsx';
-import { useGetEmployeesQuery, useCreateEmployeeMutation, useDeleteEmployeeMutation, useResendInviteMutation, useUpdateLeaveBalanceMutation } from '../../store/api/employeeApi.js';
+import {
+  useGetEmployeesQuery,
+  useCreateEmployeeMutation,
+  useUpdateEmployeeMutation,
+  useDeleteEmployeeMutation,
+  useResendInviteMutation,
+  useUpdateLeaveBalanceMutation,
+  useBulkUploadEmployeesMutation,
+} from '../../store/api/employeeApi.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
+
 export default function EmployeesPage() {
   const [search, setSearch] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showBulk, setShowBulk] = useState(false);
   const [showLeaveBalance, setShowLeaveBalance] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  const [branch, setBranch] = useState();
+  const [status, setStatus] = useState();
+  const [pagination] = useState({ current: 1, pageSize: 10 });
 
   const debouncedSearch = useDebounce(search);
-  const { data, isLoading } = useGetEmployeesQuery({ search: debouncedSearch, pagination });
+  const { data, isLoading } = useGetEmployeesQuery({
+    search: debouncedSearch,
+    branch,
+    status,
+    page: pagination.current,
+    limit: pagination.pageSize,
+  });
   const [createEmployee, { isLoading: isCreating }] = useCreateEmployeeMutation();
+  const [updateEmployee, { isLoading: isUpdating }] = useUpdateEmployeeMutation();
   const [deleteEmployee] = useDeleteEmployeeMutation();
   const [resendInvite] = useResendInviteMutation();
   const [updateLeaveBalance] = useUpdateLeaveBalanceMutation();
-
-  const actions = [
-    <Button key="bulk" icon={<UploadOutlined />} onClick={() => setShowBulk(true)}>
-      Bulk Upload
-    </Button>,
-    <Button key="add" type="primary" icon={<PlusOutlined />} onClick={() => {
-      setSelectedEmployee(null);
-      setShowForm(true);
-    }}>
-      Add Employee
-    </Button>,
-  ];
+  const [bulkUploadEmployees, { isLoading: isUploading }] = useBulkUploadEmployeesMutation();
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Employees" subtitle="Manage organization employees" actions={actions} />
+      <PageHeader
+        title="Employees"
+        subtitle="Manage organization employees"
+        actions={[
+          <Button key="bulk" icon={<UploadOutlined />} onClick={() => setShowBulk(true)}>
+            Bulk Upload
+          </Button>,
+          <Button
+            key="add"
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setSelectedEmployee(null);
+              setShowForm(true);
+            }}
+          >
+            Add Employee
+          </Button>,
+        ]}
+      />
 
       <div className="bg-white p-4 rounded-lg shadow border border-gray-100">
         <Row gutter={16}>
@@ -50,14 +72,23 @@ export default function EmployeesPage() {
               placeholder="Search by name or email..."
               prefix={<SearchOutlined />}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
             />
           </Col>
           <Col xs={24} md={6}>
-            <Select placeholder="Branch" style={{ width: '100%' }} />
+            <Select placeholder="Branch" style={{ width: '100%' }} allowClear onChange={setBranch} />
           </Col>
           <Col xs={24} md={6}>
-            <Select placeholder="Role" style={{ width: '100%' }} />
+            <Select
+              placeholder="Status"
+              style={{ width: '100%' }}
+              allowClear
+              onChange={setStatus}
+              options={[
+                { label: 'Active', value: 'active' },
+                { label: 'Inactive', value: 'inactive' },
+              ]}
+            />
           </Col>
         </Row>
       </div>
@@ -66,13 +97,17 @@ export default function EmployeesPage() {
         <EmployeeTable
           data={data?.employees || []}
           loading={isLoading}
-          onEdit={(emp) => {
-            setSelectedEmployee(emp);
+          onEdit={(employee) => {
+            setSelectedEmployee(employee);
             setShowForm(true);
           }}
           onDelete={(id) => deleteEmployee(id)}
           onResendInvite={(id) => resendInvite(id)}
-          pagination={pagination}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: data?.pagination?.count || 0,
+          }}
         />
       </Card>
 
@@ -80,17 +115,27 @@ export default function EmployeesPage() {
         open={showForm}
         employee={selectedEmployee}
         onClose={() => setShowForm(false)}
-        onSubmit={(values) => {
-          createEmployee(values);
+        onSubmit={async (values) => {
+          if (selectedEmployee?.id) {
+            await updateEmployee({ id: selectedEmployee.id, ...values });
+          } else {
+            await createEmployee(values);
+          }
+
           setShowForm(false);
         }}
-        loading={isCreating}
+        loading={isCreating || isUpdating}
       />
 
       <BulkUpload
         open={showBulk}
-        loading={false}
-        onUpload={(file) => console.log('Upload:', file)}
+        loading={isUploading}
+        onUpload={async (file) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          await bulkUploadEmployees(formData);
+          setShowBulk(false);
+        }}
         onClose={() => setShowBulk(false)}
         results={null}
       />
@@ -99,8 +144,8 @@ export default function EmployeesPage() {
         open={showLeaveBalance}
         employee={selectedEmployee}
         onClose={() => setShowLeaveBalance(false)}
-        onSubmit={(values) => {
-          updateLeaveBalance(values);
+        onSubmit={async (values) => {
+          await updateLeaveBalance(values);
           setShowLeaveBalance(false);
         }}
         loading={false}

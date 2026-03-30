@@ -1,7 +1,3 @@
-/**
- * @module BranchesPage
- * @description Branches list with geofence management.
- */
 import { useState } from 'react';
 import { Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
@@ -9,15 +5,21 @@ import PageHeader from '../../components/common/PageHeader.jsx';
 import BranchCard from './BranchCard.jsx';
 import BranchForm from './BranchForm.jsx';
 import GeoFenceDrawer from './GeoFenceDrawer.jsx';
-import BranchGeofenceMap from './GeoFenceDrawer.jsx';
-import { useGetBranchesQuery, useCreateBranchMutation, useDeleteBranchMutation } from '../../store/api/branchApi.js';
+import {
+  useGetBranchesQuery,
+  useCreateBranchMutation,
+  useUpdateBranchMutation,
+  useDeleteBranchMutation,
+} from '../../store/api/branchApi.js';
+
 export default function BranchesPage() {
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showGeofence, setShowGeofence] = useState(false);
 
-  const { data, isLoading } = useGetBranchesQuery();
+  const { data } = useGetBranchesQuery();
   const [createBranch, { isLoading: isCreating }] = useCreateBranchMutation();
+  const [updateBranch, { isLoading: isUpdating }] = useUpdateBranchMutation();
   const [deleteBranch] = useDeleteBranchMutation();
 
   return (
@@ -44,13 +46,13 @@ export default function BranchesPage() {
         {data?.branches?.map((branch) => (
           <BranchCard
             key={branch.id}
-            branch="HRIT University Ghaziabad"
-            onEdit={(b) => {
-              setSelectedBranch(b);
+            branch={branch}
+            onEdit={(record) => {
+              setSelectedBranch(record);
               setShowForm(true);
             }}
-            onSetGeofence={(b) => {
-              setSelectedBranch(b);
+            onSetGeofence={(record) => {
+              setSelectedBranch(record);
               setShowGeofence(true);
             }}
             onDelete={(id) => deleteBranch(id)}
@@ -62,24 +64,21 @@ export default function BranchesPage() {
         open={showForm}
         branch={selectedBranch}
         onClose={() => setShowForm(false)}
-        onSubmit={(values) => {
-          createBranch(values);
+        onSubmit={async (values) => {
+          if (selectedBranch?.id) {
+            await updateBranch({ id: selectedBranch.id, ...values });
+          } else {
+            await createBranch(values);
+          }
           setShowForm(false);
         }}
-        loading={isCreating}
+        loading={isCreating || isUpdating}
       />
 
-      {/* <GeoFenceDrawer
+      <GeoFenceDrawer
         open={showGeofence}
         branch={selectedBranch}
-        onSave={() => setShowGeofence(false)}
-        onCancel={() => setShowGeofence(false)}
-        loading={false}
-      /> */}
-
-      <BranchGeofenceMap
-         branchId={3}
-         branchAddress="Cyber City, Gurugram, Haryana"  // e.g. "Cyber City, Gurugram, Haryana"
+        onClose={() => setShowGeofence(false)}
       />
     </div>
   );

@@ -1,7 +1,3 @@
-/**
- * @module employeeApi
- * @description RTK Query API for employee endpoints (CRUD, bulk upload).
- */
 import { baseApi } from './baseApi.js';
 
 export const employeeApi = baseApi.injectEndpoints({
@@ -16,6 +12,12 @@ export const employeeApi = baseApi.injectEndpoints({
     getEmployeeDetail: builder.query({
       query: (id) => ({
         url: `/employees/${id}`,
+      }),
+      providesTags: ['Employees'],
+    }),
+    getEmployeeAttendanceSummary: builder.query({
+      query: (id) => ({
+        url: `/employees/${id}/attendance-summary`,
       }),
       providesTags: ['Employees'],
     }),
@@ -43,46 +45,36 @@ export const employeeApi = baseApi.injectEndpoints({
       invalidatesTags: ['Employees'],
     }),
     bulkUploadEmployees: builder.mutation({
-      query: (body) => ({
+      query: (formData) => ({
         url: '/employees/bulk-upload',
         method: 'POST',
-        body,
-      }),
-      invalidatesTags: ['Employees'],
-    }),
-    getEmployeeLeaveBalance: builder.query({
-      query: (id) => ({
-        url: `/employees/${id}/leave-balance`,
-      }),
-      providesTags: ['Employees'],
-    }),
-    updateLeaveBalance: builder.mutation({
-      query: ({ id, ...body }) => ({
-        url: `/employees/${id}/leave-balance`,
-        method: 'PUT',
-        body,
+        body: formData,
       }),
       invalidatesTags: ['Employees'],
     }),
     resendInvite: builder.mutation({
-      query: (id) => ({
-        url: `/employees/${id}/resend-invite`,
-        method: 'POST',
+      queryFn: async (id) => ({
+        data: { id },
       }),
       invalidatesTags: ['Employees'],
     }),
+    updateLeaveBalance: builder.mutation({
+      queryFn: async (values) => ({
+        data: values,
+      }),
+    }),
   }),
-  overrideExisting: false,
+  overrideExisting: true,
 });
 
 export const {
   useGetEmployeesQuery,
   useGetEmployeeDetailQuery,
+  useGetEmployeeAttendanceSummaryQuery,
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
   useBulkUploadEmployeesMutation,
-  useGetEmployeeLeaveBalanceQuery,
-  useUpdateLeaveBalanceMutation,
   useResendInviteMutation,
+  useUpdateLeaveBalanceMutation,
 } = employeeApi;

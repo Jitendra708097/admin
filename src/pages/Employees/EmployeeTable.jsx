@@ -1,7 +1,3 @@
-/**
- * @module EmployeeTable
- * @description Paginated, searchable employee table.
- */
 import { Table, Space, Button, Dropdown, Avatar } from 'antd';
 import { EditOutlined, DeleteOutlined, MailOutlined, MoreOutlined } from '@ant-design/icons';
 import RoleBadge from '../../components/common/RoleBadge.jsx';
@@ -13,61 +9,48 @@ export default function EmployeeTable({ data, loading, onEdit, onDelete, onResen
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      render: (name, record) => (
+      render: (name) => (
         <Space>
-          <Avatar>{name.charAt(0)}</Avatar>
+          <Avatar>{name?.charAt(0) || 'E'}</Avatar>
           {name}
         </Space>
       ),
     },
     {
-      title: 'Code',
+      title: 'Emp Code',
       dataIndex: 'empCode',
       key: 'empCode',
-      width: 100,
     },
     {
-      title: 'Email',
-      dataIndex: 'email',
-      key: 'email',
-    },
-    {
-      title: 'Branch',
-      dataIndex: 'branchName',
-      key: 'branchName',
-      width: 120,
+      title: 'Department',
+      dataIndex: 'departmentName',
+      key: 'departmentName',
     },
     {
       title: 'Shift',
       dataIndex: 'shiftName',
       key: 'shiftName',
-      width: 100,
+    },
+    {
+      title: 'Branch',
+      dataIndex: 'branchName',
+      key: 'branchName',
     },
     {
       title: 'Role',
       dataIndex: 'role',
       key: 'role',
       render: (role) => <RoleBadge role={role} />,
-      width: 100,
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
       render: (status) => <StatusBadge status={status} />,
-      width: 100,
-    },
-    {
-      title: 'Face Enrolled',
-      dataIndex: 'faceEnrolled',
-      key: 'faceEnrolled',
-      render: (enrolled) => (enrolled ? 'Yes' : 'No'),
-      width: 100,
     },
     {
       title: 'Actions',
       key: 'actions',
-      width: 100,
       render: (_, record) => (
         <Dropdown
           menu={{
@@ -82,9 +65,8 @@ export default function EmployeeTable({ data, loading, onEdit, onDelete, onResen
                 key: 'resend',
                 icon: <MailOutlined />,
                 label: 'Resend Invite',
-                onClick: () => onResendInvite(record.id),
+                onClick: () => onResendInvite?.(record.id),
               },
-              { type: 'divider' },
               {
                 key: 'delete',
                 icon: <DeleteOutlined />,
@@ -102,6 +84,13 @@ export default function EmployeeTable({ data, loading, onEdit, onDelete, onResen
   ];
 
   return (
-    <Table columns={columns} dataSource={data} loading={loading} rowKey="id" pagination={pagination} scroll={{ x: 1200 }} />
+    <Table
+      columns={columns}
+      dataSource={data}
+      loading={loading}
+      rowKey="id"
+      pagination={pagination}
+      scroll={{ x: 1100 }}
+    />
   );
 }

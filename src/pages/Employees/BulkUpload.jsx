@@ -1,17 +1,9 @@
-/**
- * @module BulkUpload
- * @description Excel upload modal for bulk employee import.
- */
-import { Modal, Upload, Button, Progress, Table, Empty, message } from 'antd';
+import { Modal, Upload, Button, Progress, Table, message } from 'antd';
 import { UploadOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-const ALLOWED_EXTENSIONS = ['.xlsx', '.xls'];
 
 export default function BulkUpload({ open, loading, onUpload, onClose, results }) {
   const columns = [
-    { title: 'Row', dataIndex: 'row', key: 'row', width: 60 },
+    { title: 'Row', dataIndex: 'row', key: 'row' },
     { title: 'Email', dataIndex: 'email', key: 'email' },
     {
       title: 'Status',
@@ -27,27 +19,14 @@ export default function BulkUpload({ open, loading, onUpload, onClose, results }
     { title: 'Message', dataIndex: 'message', key: 'message' },
   ];
 
-  const validateAndUpload = ({ file }) => {
-    // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      message.error('Invalid file type. Only Excel files (.xlsx, .xls) are allowed.');
+  const customRequest = ({ file }) => {
+    const fileName = String(file.name || '').toLowerCase();
+
+    if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
+      message.error('Please upload an Excel file.');
       return;
     }
 
-    // Check file extension
-    const fileName = file.name.toLowerCase();
-    if (!ALLOWED_EXTENSIONS.some(ext => fileName.endsWith(ext))) {
-      message.error('Invalid file extension. Only .xlsx and .xls files are allowed.');
-      return;
-    }
-
-    // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      message.error(`File size exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit. Current size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
-      return;
-    }
-
-    // File validation passed, proceed with upload
     onUpload(file);
   };
 
@@ -60,24 +39,15 @@ export default function BulkUpload({ open, loading, onUpload, onClose, results }
       footer={<Button onClick={onClose}>Done</Button>}
     >
       {!results ? (
-        <Upload
-          accept=".xlsx,.xls"
-          maxCount={1}
-          customRequest={validateAndUpload}
-        >
+        <Upload customRequest={customRequest} accept=".xlsx,.xls" showUploadList={false}>
           <Button icon={<UploadOutlined />} loading={loading}>
-            Click to Upload Excel File
+            Upload Excel File
           </Button>
         </Upload>
       ) : (
         <>
-          <Progress
-            percent={
-              ((results.filter((r) => r.status === 'success').length / results.length) * 100).toFixed(0)
-            }
-            status={results.every((r) => r.status === 'success') ? 'success' : 'exception'}
-          />
-          <Table columns={columns} dataSource={results} pagination={false} size="small" rowKey="row" style={{ marginTop: 16 }} />
+          <Progress percent={100} />
+          <Table columns={columns} dataSource={results} pagination={false} rowKey="row" style={{ marginTop: 16 }} />
         </>
       )}
     </Modal>

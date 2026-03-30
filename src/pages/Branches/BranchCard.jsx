@@ -1,7 +1,3 @@
-/**
- * @module BranchCard
-n * @description Branch info card.
- */
 import { Card, Button, Space, Badge, Statistic, Row, Col } from 'antd';
 import { EditOutlined, DeleteOutlined, EnvironmentOutlined } from '@ant-design/icons';
 
@@ -19,10 +15,7 @@ export default function BranchCard({ branch, onEdit, onSetGeofence, onDelete }) 
       style={{ height: '100%' }}
     >
       <p>
-        <EnvironmentOutlined /> {branch.address}
-      </p>
-      <p>
-        <strong>Coordinates:</strong> {branch.latitude}, {branch.longitude}
+        <EnvironmentOutlined /> {branch.address || 'No address provided'}
       </p>
 
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
@@ -38,7 +31,7 @@ export default function BranchCard({ branch, onEdit, onSetGeofence, onDelete }) 
         </Col>
       </Row>
 
-      {branch.isRemote && <Badge color="blue" text="Remote Office" style={{ marginTop: 8 }} />}
+      {branch.isRemote ? <Badge color="blue" text="Remote Office" style={{ marginTop: 8 }} /> : null}
     </Card>
   );
 }
