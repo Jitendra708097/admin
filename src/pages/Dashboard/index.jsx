@@ -1,26 +1,22 @@
-/**
- * @module DashboardPage
- * @description Main dashboard with stats, trends, pending approvals, and recent activity.
- */
-import { Row, Col, Card, Statistic, Spin } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
-import { useGetOrgStatsQuery } from '../../store/api/orgApi.js';
+import { Avatar, Card, Col, List, Row, Spin, Tag } from 'antd';
+import { ClockCircleOutlined, TeamOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/common/PageHeader.jsx';
-import AttendanceLineChart from '../../components/charts/AttendanceLineChart.jsx';
 import StatusPieChart from '../../components/charts/StatusPieChart.jsx';
+import LateBarChart from '../../components/charts/LateBarChart.jsx';
+import StatCard from '../../components/StatCard.jsx';
+import AttendanceTrendChart from '../../components/AttendanceTrendChart.jsx';
+import {
+  useGetAttendanceStatsTodayQuery,
+  useGetAttendanceTrendQuery,
+  useGetRecentActivityQuery,
+  useGetTopLateEmployeesQuery,
+} from '../../store/api/attendanceApi.js';
 
 export default function DashboardPage() {
-  const { data: stats, isLoading } = useGetOrgStatsQuery();
-
-  const chartData = [
-    { date: 'Mon', present: 200, absent: 20, leave: 10 },
-    { date: 'Tue', present: 210, absent: 15, leave: 12 },
-    { date: 'Wed', present: 205, absent: 18, leave: 15 },
-    { date: 'Thu', present: 215, absent: 12, leave: 10 },
-    { date: 'Fri', present: 220, absent: 10, leave: 8 },
-    { date: 'Sat', present: 180, absent: 30, leave: 5 },
-    { date: 'Sun', present: 150, absent: 35, leave: 10 },
-  ];
+  const { data: stats, isLoading: statsLoading } = useGetAttendanceStatsTodayQuery();
+  const { data: trend = [], isLoading: trendLoading } = useGetAttendanceTrendQuery({ days: 30 });
+  const { data: lateEmployees = [], isLoading: lateLoading } = useGetTopLateEmployeesQuery({ limit: 5 });
+  const { data: activity = [], isLoading: activityLoading } = useGetRecentActivityQuery({ limit: 8 });
 
   const pieData = [
     { name: 'Present', value: stats?.presentCount || 0 },
@@ -29,99 +25,77 @@ export default function DashboardPage() {
     { name: 'Late', value: stats?.lateCount || 0 },
   ];
 
-  if (isLoading) return <Spin className="py-12" />;
+  if (statsLoading || trendLoading || lateLoading || activityLoading) return <Spin className="py-12" />;
 
   return (
     <div className="space-y-6">
       <PageHeader title="Dashboard" />
 
-      {/* Stats Row */}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Total Employees"
-              value={stats?.employeeCount || 0}
-              prefix={<UserOutlined />}
-            />
-          </Card>
+          <StatCard title="Total Employees" value={stats?.employeeCount || 0} prefix={<TeamOutlined />} />
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Checked In Today"
-              value={stats?.checkedInCount || 0}
-              valueStyle={{ color: '#52c41a' }}
-            />
-          </Card>
+          <StatCard title="Checked In Today" value={stats?.checkedInCount || 0} valueStyle={{ color: '#52c41a' }} />
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Absent Today"
-              value={stats?.absentCount || 0}
-              valueStyle={{ color: '#ff4d4f' }}
-            />
-          </Card>
+          <StatCard title="Absent Today" value={stats?.absentCount || 0} valueStyle={{ color: '#ff4d4f' }} />
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Late Today"
-              value={stats?.lateCount || 0}
-              valueStyle={{ color: '#faad14' }}
-            />
-          </Card>
+          <StatCard title="Late Today" value={stats?.lateCount || 0} valueStyle={{ color: '#faad14' }} />
         </Col>
       </Row>
 
-      {/* Charts Row */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} md={12}>
-          <Card title="Attendance Trend (Last 7 Days)">
-            <AttendanceLineChart data={chartData} />
-          </Card>
+        <Col xs={24} lg={16}>
+          <AttendanceTrendChart data={trend} />
         </Col>
-        <Col xs={24} md={12}>
-          <Card title="Status Distribution">
+        <Col xs={24} lg={8}>
+          <Card title="Status Distribution" bordered={false} style={{ borderRadius: 16, boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)' }}>
             <StatusPieChart data={pieData} />
           </Card>
         </Col>
       </Row>
 
-      {/* Pending Approvals */}
       <Row gutter={[16, 16]}>
-        <Col xs={24}>
-          <Card title="Pending Approvals">
+        <Col xs={24} lg={10}>
+          <Card title="Top Late Employees" bordered={false} style={{ borderRadius: 16, boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)' }}>
+            <LateBarChart data={lateEmployees} />
+          </Card>
+        </Col>
+        <Col xs={24} lg={14}>
+          <Card title="Pending Approvals" bordered={false} style={{ borderRadius: 16, boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)' }}>
             <Row gutter={[16, 16]}>
               <Col xs={24} md={8}>
-                <Card size="small">
-                  <Statistic
-                    title="Pending Leaves"
-                    value={stats?.pendingLeaves || 0}
-                    valueStyle={{ color: '#1890ff' }}
-                  />
-                </Card>
+                <StatCard title="Pending Leaves" value={stats?.pendingLeaves || 0} valueStyle={{ color: '#1890ff' }} />
               </Col>
               <Col xs={24} md={8}>
-                <Card size="small">
-                  <Statistic
-                    title="Pending Regularisations"
-                    value={stats?.pendingRegularisations || 0}
-                    valueStyle={{ color: '#722ed1' }}
-                  />
-                </Card>
+                <StatCard title="Pending Regularisations" value={stats?.pendingRegularisations || 0} valueStyle={{ color: '#722ed1' }} />
               </Col>
               <Col xs={24} md={8}>
-                <Card size="small">
-                  <Statistic
-                    title="Pending Device Exceptions"
-                    value={stats?.pendingExceptions || 0}
-                    valueStyle={{ color: '#faad14' }}
-                  />
-                </Card>
+                <StatCard title="Pending Device Exceptions" value={stats?.pendingExceptions || 0} valueStyle={{ color: '#faad14' }} />
               </Col>
             </Row>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24}>
+          <Card title="Recent Activity" bordered={false} style={{ borderRadius: 16, boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)' }}>
+            <List
+              dataSource={activity}
+              renderItem={(item) => (
+                <List.Item>
+                  <List.Item.Meta
+                    avatar={<Avatar icon={<ClockCircleOutlined />} />}
+                    title={item.empName || item.action}
+                    description={item.time}
+                  />
+                  <Tag color="blue">{item.action || item.status || 'activity'}</Tag>
+                </List.Item>
+              )}
+            />
           </Card>
         </Col>
       </Row>

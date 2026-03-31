@@ -1,4 +1,4 @@
-import { Form, Input, Button, Card, Row, Col, message, Checkbox } from 'antd';
+import { App as AntdApp, Form, Input, Button, Card, Row, Col, Checkbox } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
@@ -9,6 +9,7 @@ import styles from './auth.module.css';
 
 export default function LoginPage() {
   const [form] = Form.useForm();
+  const { message } = AntdApp.useApp();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [login, { isLoading }] = useLoginMutation();
@@ -20,12 +21,18 @@ export default function LoginPage() {
         password: values.password,
       }).unwrap();
 
+      const authPayload = response?.employee ? response : response?.data;
+
+      if (!authPayload?.employee || !authPayload?.accessToken || !authPayload?.refreshToken) {
+        throw new Error('Invalid login response');
+      }
+
       dispatch(
         setAuth({
-          user: response.employee,
-          accessToken: response.accessToken,
-          refreshToken: response.refreshToken,
-          org: { id: response.employee.orgId },
+          user: authPayload.employee,
+          accessToken: authPayload.accessToken,
+          refreshToken: authPayload.refreshToken,
+          org: { id: authPayload.employee.orgId },
         })
       );
 

@@ -8,16 +8,17 @@ export const regularisationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getRegularisations: builder.query({
       query: (params) => ({
-        url: '/regularisations',
+        url: '/regularisations/pending',
         params,
       }),
       providesTags: ['Regularisations'],
     }),
-    getRegularisationDetail: builder.query({
-      query: (id) => ({
-        url: `/regularisations/${id}`,
+    managerApproveRegularisation: builder.mutation({
+      query: ({ id }) => ({
+        url: `/regularisations/${id}/manager-approve`,
+        method: 'PUT',
       }),
-      providesTags: ['Regularisations'],
+      invalidatesTags: ['Regularisations', 'Attendance'],
     }),
     approveRegularisation: builder.mutation({
       query: ({ id, ...body }) => ({
@@ -25,7 +26,7 @@ export const regularisationApi = baseApi.injectEndpoints({
         method: 'PUT',
         body,
       }),
-      invalidatesTags: ['Regularisations'],
+      invalidatesTags: ['Regularisations', 'Attendance'],
     }),
     rejectRegularisation: builder.mutation({
       query: ({ id, ...body }) => ({
@@ -41,7 +42,7 @@ export const regularisationApi = baseApi.injectEndpoints({
 
 export const {
   useGetRegularisationsQuery,
-  useGetRegularisationDetailQuery,
+  useManagerApproveRegularisationMutation,
   useApproveRegularisationMutation,
   useRejectRegularisationMutation,
 } = regularisationApi;

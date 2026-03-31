@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from 'antd';
+import { Button, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import BranchCard from './BranchCard.jsx';
@@ -67,8 +67,12 @@ export default function BranchesPage() {
         onSubmit={async (values) => {
           if (selectedBranch?.id) {
             await updateBranch({ id: selectedBranch.id, ...values });
+            message.success('Branch updated');
           } else {
-            await createBranch(values);
+            const createdBranch = await createBranch(values).unwrap();
+            message.success('Branch created. Set the geofence next.');
+            setSelectedBranch(createdBranch);
+            setShowGeofence(true);
           }
           setShowForm(false);
         }}

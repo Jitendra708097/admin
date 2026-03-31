@@ -33,7 +33,7 @@ export default function LeaveTable({ data, loading, onApprove, onReject, paginat
           <Space>
             <Popconfirm
               title="Approve leave?"
-              onConfirm={() => onApprove(record.id)}
+              onConfirm={() => onApprove(record)}
               okText="Yes"
               cancelText="No"
             >
@@ -44,7 +44,7 @@ export default function LeaveTable({ data, loading, onApprove, onReject, paginat
               danger
               icon={<CloseOutlined />}
               size="small"
-              onClick={() => onReject(record.id)}
+              onClick={() => onReject(record)}
             />
           </Space>
         ) : null,

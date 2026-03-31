@@ -3,21 +3,23 @@
  * @description Leave requests management with approval workflow and calendar view.
  */
 import { useState } from 'react';
-import { Card, Tabs } from 'antd';
+import { App as AntdApp, Card, Tabs } from 'antd';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import LeaveTable from './LeaveTable.jsx';
 import LeaveCalendar from './LeaveCalendar.jsx';
 import LeaveApprovalModal from './LeaveApprovalModal.jsx';
-import { useGetLeavesQuery, useApproveLeavesMutation, useRejectLeavesMutation } from '../../store/api/leaveApi.js';
+import { useGetLeavesQuery, useApproveLeaveMutation, useRejectLeaveMutation } from '../../store/api/leaveApi.js';
 
 export default function LeavesPage() {
+  const { message } = AntdApp.useApp();
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  const [pagination] = useState({ current: 1, pageSize: 10 });
 
-  const { data, isLoading } = useGetLeavesQuery({ pagination });
-  const [approveLeave] = useApproveLeavesMutation();
-  const [rejectLeave] = useRejectLeavesMutation();
+  const { data, isLoading } = useGetLeavesQuery({ limit: pagination.pageSize });
+  const [approveLeave, { isLoading: approving }] = useApproveLeaveMutation();
+  const [rejectLeave, { isLoading: rejecting }] = useRejectLeaveMutation();
+  const leaves = data?.leaves || [];
 
   const items = [
     {
@@ -26,10 +28,16 @@ export default function LeavesPage() {
       children: (
         <Card>
           <LeaveTable
-            data={data?.leaves || []}
+            data={leaves}
             loading={isLoading}
-            onApprove={(id) => approveLeave(id)}
-            onReject={(id) => rejectLeave(id)}
+            onApprove={(leave) => {
+              setSelectedLeave(leave);
+              setShowApprovalModal(true);
+            }}
+            onReject={(leave) => {
+              setSelectedLeave(leave);
+              setShowApprovalModal(true);
+            }}
             pagination={pagination}
           />
         </Card>
@@ -40,7 +48,7 @@ export default function LeavesPage() {
       label: 'Calendar View',
       children: (
         <Card>
-          <LeaveCalendar leaves={data?.leaves || []} />
+          <LeaveCalendar leaves={leaves} />
         </Card>
       ),
     },
@@ -56,16 +64,18 @@ export default function LeavesPage() {
         open={showApprovalModal}
         leave={selectedLeave}
         leaveBalance={{}}
-        onApprove={(id) => {
-          approveLeave(id);
+        onApprove={async (id) => {
+          await approveLeave({ id }).unwrap();
+          message.success('Leave approved');
           setShowApprovalModal(false);
         }}
-        onReject={(id, note) => {
-          rejectLeave(id);
+        onReject={async (id, note) => {
+          await rejectLeave({ id, reason: note }).unwrap();
+          message.success('Leave rejected');
           setShowApprovalModal(false);
         }}
         onClose={() => setShowApprovalModal(false)}
-        loading={false}
+        loading={approving || rejecting}
       />
     </div>
   );

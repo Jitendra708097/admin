@@ -7,6 +7,9 @@ import axios from 'axios';
 import { message } from 'antd';
 
 let store;
+const API_BASE_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api/v1`
+  : '/api/v1';
 
 // Function to lazily import store to avoid circular dependencies
 const getStore = async () => {
@@ -18,7 +21,7 @@ const getStore = async () => {
 };
 
 const axiosInstance = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api/v1`,
+  baseURL: API_BASE_URL,
   timeout: 30000,
 });
 
@@ -46,7 +49,7 @@ axiosInstance.interceptors.response.use(
         const refreshToken = storeInstance.getState().auth.refreshToken;
 
         const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/v1/auth/refresh`,
+          `${API_BASE_URL}/auth/refresh`,
           { refreshToken }
         );
 

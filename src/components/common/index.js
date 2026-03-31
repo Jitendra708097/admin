@@ -11,3 +11,8 @@ export { default as ConfirmModal } from './ConfirmModal.jsx';
 export { default as DateRangePicker } from './DateRangePicker.jsx';
 export { default as SearchInput } from './SearchInput.jsx';
 export { default as ErrorBoundary } from './ErrorBoundary.jsx';
+export { default as StatCard } from '../StatCard.jsx';
+export { default as AttendanceTrendChart } from '../AttendanceTrendChart.jsx';
+export { default as LiveAttendanceTable } from '../LiveAttendanceTable.jsx';
+export { default as OrgSidebar } from '../OrgSidebar.jsx';
+export { default as TopNav } from '../TopNav.jsx';

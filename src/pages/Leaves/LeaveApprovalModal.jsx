@@ -2,7 +2,7 @@
  * @module LeaveApprovalModal
  * @description Modal for approving/rejecting leave requests.
  */
-import { Modal, Form, Input, Button, Space, Card, Statistic, Row, Col, message } from 'antd';
+import { App as AntdApp, Modal, Form, Input, Button, Space, Card, Statistic, Row, Col } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 
 export default function LeaveApprovalModal({
@@ -15,6 +15,7 @@ export default function LeaveApprovalModal({
   loading,
 }) {
   const [form] = Form.useForm();
+  const { message } = AntdApp.useApp();
 
   const handleApprove = async () => {
     if (!leave?.id) {
@@ -69,22 +70,22 @@ export default function LeaveApprovalModal({
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={12}>
           <Card size="small">
-            <Statistic title="Employee" value={leave.employeeName} />
+            <Statistic title="Employee" value={leave.employeeName || '-'} />
           </Card>
         </Col>
         <Col xs={12}>
           <Card size="small">
-            <Statistic title="Type" value={leave.leaveType} />
+            <Statistic title="Type" value={leave.leaveType || '-'} />
           </Card>
         </Col>
         <Col xs={12}>
           <Card size="small">
-            <Statistic title="From" value={leave.fromDate} />
+            <Statistic title="From" value={leave.fromDate || '-'} />
           </Card>
         </Col>
         <Col xs={12}>
           <Card size="small">
-            <Statistic title="To" value={leave.toDate} />
+            <Statistic title="To" value={leave.toDate || '-'} />
           </Card>
         </Col>
       </Row>

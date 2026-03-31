@@ -8,20 +8,14 @@ export const leaveApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getLeaves: builder.query({
       query: (params) => ({
-        url: '/leaves',
+        url: '/leave/pending',
         params,
-      }),
-      providesTags: ['Leaves'],
-    }),
-    getLeaveDetail: builder.query({
-      query: (id) => ({
-        url: `/leaves/${id}`,
       }),
       providesTags: ['Leaves'],
     }),
     approveLeave: builder.mutation({
       query: ({ id, ...body }) => ({
-        url: `/leaves/${id}/approve`,
+        url: `/leave/${id}/approve`,
         method: 'PUT',
         body,
       }),
@@ -29,7 +23,7 @@ export const leaveApi = baseApi.injectEndpoints({
     }),
     rejectLeave: builder.mutation({
       query: ({ id, ...body }) => ({
-        url: `/leaves/${id}/reject`,
+        url: `/leave/${id}/reject`,
         method: 'PUT',
         body,
       }),
@@ -37,7 +31,7 @@ export const leaveApi = baseApi.injectEndpoints({
     }),
     getLeaveCalendar: builder.query({
       query: (params) => ({
-        url: '/leaves/calendar',
+        url: '/leave/pending',
         params,
       }),
       providesTags: ['Leaves'],
@@ -48,8 +42,7 @@ export const leaveApi = baseApi.injectEndpoints({
 
 export const {
   useGetLeavesQuery,
-  useGetLeaveDetailQuery,
-  useApproveLeavesMutation,
-  useRejectLeavesMutation,
+  useApproveLeaveMutation,
+  useRejectLeaveMutation,
   useGetLeaveCalendarQuery,
 } = leaveApi;

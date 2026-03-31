@@ -21,7 +21,34 @@ export const attendanceApi = baseApi.injectEndpoints({
     }),
     getLiveBoard: builder.query({
       query: (params) => ({
-        url: '/attendance/live-board',
+        url: '/attendance/live',
+        params,
+      }),
+      providesTags: ['Attendance'],
+    }),
+    getAttendanceStatsToday: builder.query({
+      query: () => ({
+        url: '/attendance/stats/today',
+      }),
+      providesTags: ['Attendance'],
+    }),
+    getAttendanceTrend: builder.query({
+      query: (params) => ({
+        url: '/attendance/stats/trend',
+        params,
+      }),
+      providesTags: ['Attendance'],
+    }),
+    getTopLateEmployees: builder.query({
+      query: (params) => ({
+        url: '/attendance/stats/top-late',
+        params,
+      }),
+      providesTags: ['Attendance'],
+    }),
+    getRecentActivity: builder.query({
+      query: (params) => ({
+        url: '/attendance/stats/activity',
         params,
       }),
       providesTags: ['Attendance'],
@@ -57,6 +84,10 @@ export const {
   useGetAttendanceQuery,
   useGetAttendanceDetailQuery,
   useGetLiveBoardQuery,
+  useGetAttendanceStatsTodayQuery,
+  useGetAttendanceTrendQuery,
+  useGetTopLateEmployeesQuery,
+  useGetRecentActivityQuery,
   useFlagAnomalyMutation,
   useUnflagAnomalyMutation,
   useExportAttendanceMutation,

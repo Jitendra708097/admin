@@ -3,20 +3,48 @@
  * @description Regularisation requests list with approval.
  */
 import { useState } from 'react';
-import { Card, Button, Space } from 'antd';
+import { App, Card } from 'antd';
+import { useSelector } from 'react-redux';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import RegTable from './RegTable.jsx';
 import RegApprovalModal from './RegApprovalModal.jsx';
-import { useGetRegularisationsQuery, useApproveRegularisationMutation, useRejectRegularisationMutation } from '../../store/api/regularisationApi.js';
+import {
+  useGetRegularisationsQuery,
+  useManagerApproveRegularisationMutation,
+  useApproveRegularisationMutation,
+  useRejectRegularisationMutation,
+} from '../../store/api/regularisationApi.js';
 
 export default function RegularisationsPage() {
+  const { message } = App.useApp();
   const [selectedReg, setSelectedReg] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  const role = useSelector((state) => state.auth.user?.role || 'admin');
 
-  const { data, isLoading } = useGetRegularisationsQuery({ pagination });
-  const [approveReg] = useApproveRegularisationMutation();
-  const [rejectReg] = useRejectRegularisationMutation();
+  const { data, isLoading } = useGetRegularisationsQuery();
+  const [managerApproveReg, { isLoading: isManagerApproving }] = useManagerApproveRegularisationMutation();
+  const [rejectReg, { isLoading: isRejecting }] = useRejectRegularisationMutation();
+  const [approveReg, { isLoading: isApproving }] = useApproveRegularisationMutation();
+
+  const handleDecision = async (action, id, values = {}) => {
+    try {
+      if (action === 'manager-approve') {
+        await managerApproveReg({ id }).unwrap();
+        message.success('Regularisation moved to admin review');
+      } else if (action === 'approve') {
+        await approveReg({ id, ...values }).unwrap();
+        message.success('Regularisation approved');
+      } else {
+        await rejectReg({ id, ...values }).unwrap();
+        message.success('Regularisation rejected');
+      }
+
+      setShowModal(false);
+      setSelectedReg(null);
+    } catch (error) {
+      message.error(error?.data?.error?.message || 'Unable to update regularisation');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -30,25 +58,20 @@ export default function RegularisationsPage() {
             setSelectedReg(record);
             setShowModal(true);
           }}
-          onApprove={(id) => approveReg(id)}
-          onReject={(id) => rejectReg(id)}
-          pagination={pagination}
         />
       </Card>
 
       <RegApprovalModal
         open={showModal}
         reg={selectedReg}
-        onApprove={(id) => {
-          approveReg(id);
+        role={role}
+        onApprove={(id, values) => handleDecision(role === 'manager' ? 'manager-approve' : 'approve', id, values)}
+        onReject={(id, values) => handleDecision('reject', id, values)}
+        onClose={() => {
           setShowModal(false);
+          setSelectedReg(null);
         }}
-        onReject={(id) => {
-          rejectReg(id);
-          setShowModal(false);
-        }}
-        onClose={() => setShowModal(false)}
-        loading={false}
+        loading={isApproving || isRejecting || isManagerApproving}
       />
     </div>
   );

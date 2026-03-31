@@ -17,7 +17,10 @@ export default function LeaveCalendar({ leaves, onDateSelect }) {
     return leaves?.filter((leave) => {
       const fromDate = dayjs(leave.fromDate);
       const toDate = dayjs(leave.toDate);
-      return value.isBetween(fromDate, toDate, null, '[]');
+      return (
+        (value.isAfter(fromDate, 'day') || value.isSame(fromDate, 'day')) &&
+        (value.isBefore(toDate, 'day') || value.isSame(toDate, 'day'))
+      );
     }) || [];
   };
 

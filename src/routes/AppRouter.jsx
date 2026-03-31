@@ -35,7 +35,7 @@ export default function AppRouter() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Protected Routes */}
-      {/* <Route element={<ProtectedRoute />}> */}
+      <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/attendance" element={<AttendancePage />} />
@@ -54,7 +54,7 @@ export default function AppRouter() {
           <Route path="/billing" element={<BillingPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
-      {/* </Route> */}
+      </Route>
 
       {/* Fallback Routes */}
       <Route path="/404" element={<NotFoundPage />} />

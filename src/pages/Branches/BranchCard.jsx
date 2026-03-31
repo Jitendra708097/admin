@@ -1,4 +1,4 @@
-import { Card, Button, Space, Badge, Statistic, Row, Col } from 'antd';
+import { Card, Button, Space, Badge, Statistic, Row, Col, Typography } from 'antd';
 import { EditOutlined, DeleteOutlined, EnvironmentOutlined } from '@ant-design/icons';
 
 export default function BranchCard({ branch, onEdit, onSetGeofence, onDelete }) {
@@ -30,6 +30,28 @@ export default function BranchCard({ branch, onEdit, onSetGeofence, onDelete }) 
           )}
         </Col>
       </Row>
+
+      <div
+        style={{
+          marginTop: 18,
+          padding: 14,
+          borderRadius: 14,
+          background: branch.hasGeofence ? 'linear-gradient(135deg, #ecfdf3 0%, #dcfce7 100%)' : 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+          border: `1px solid ${branch.hasGeofence ? '#86efac' : '#fdba74'}`,
+        }}
+      >
+        <Typography.Text strong style={{ display: 'block', marginBottom: 6, color: '#111827' }}>
+          {branch.hasGeofence ? 'Geofence is ready' : 'Set branch geofence'}
+        </Typography.Text>
+        <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+          {branch.hasGeofence
+            ? 'Update the polygon anytime to refine the branch attendance zone.'
+            : 'Draw the branch boundary on the map so attendance only works inside the allowed area.'}
+        </Typography.Text>
+        <Button type="primary" icon={<EnvironmentOutlined />} onClick={() => onSetGeofence(branch)}>
+          {branch.hasGeofence ? 'Edit Geofence' : 'Set Geofence'}
+        </Button>
+      </div>
 
       {branch.isRemote ? <Badge color="blue" text="Remote Office" style={{ marginTop: 8 }} /> : null}
     </Card>
