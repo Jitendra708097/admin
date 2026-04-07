@@ -1,6 +1,8 @@
-import { Card, Descriptions, Row, Col, Statistic } from 'antd';
+import { Button, Card, Descriptions, Row, Col, Statistic } from 'antd';
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import PageHeader from '../../components/common/PageHeader.jsx';
+import DeviceExceptionModal from './DeviceExceptionModal.jsx';
 import {
   useGetEmployeeDetailQuery,
   useGetEmployeeAttendanceSummaryQuery,
@@ -8,12 +10,21 @@ import {
 
 export default function EmployeeDetailPage() {
   const { id } = useParams();
+  const [showDeviceException, setShowDeviceException] = useState(false);
   const { data: employee } = useGetEmployeeDetailQuery(id);
   const { data: summary } = useGetEmployeeAttendanceSummaryQuery(id);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader title={employee?.name || 'Employee Profile'} subtitle={`Employee ID: ${id}`} />
+      <PageHeader
+        title={employee?.name || 'Employee Profile'}
+        subtitle={`Employee ID: ${id}`}
+        actions={[
+          <Button key="device-exception" onClick={() => setShowDeviceException(true)}>
+            Device Exception
+          </Button>,
+        ]}
+      />
       <Card className="m-6">
         <Descriptions bordered column={2}>
           <Descriptions.Item label="Email">{employee?.email}</Descriptions.Item>
@@ -36,6 +47,12 @@ export default function EmployeeDetailPage() {
           </Col>
         </Row>
       </Card>
+
+      <DeviceExceptionModal
+        open={showDeviceException}
+        employee={employee}
+        onClose={() => setShowDeviceException(false)}
+      />
     </div>
   );
 }

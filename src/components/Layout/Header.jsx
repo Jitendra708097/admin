@@ -44,7 +44,7 @@ export default function AppHeader() {
   };
 
   return (
-    <Header className="bg-white shadow-sm px-6 py-4 flex justify-between items-center border-b border-gray-200">
+    <Header className="flex h-auto shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
       <div>
         <h2 className="m-0 text-lg font-semibold text-gray-900">AttendEase Admin</h2>
       </div>

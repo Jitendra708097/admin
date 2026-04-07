@@ -133,27 +133,31 @@ export default function Sidebar() {
       collapsible
       collapsed={sidebarCollapsed}
       width={250}
-      className="bg-gray-900"
+      className="h-screen overflow-hidden bg-gray-900"
     >
-      <div className="p-4 text-white text-center border-b border-gray-700 mb-4">
-        <h2 className="m-0 text-base font-semibold">
-          {sidebarCollapsed ? 'AE' : 'AttendEase'}
-        </h2>
-      </div>
+      <div className="flex h-full flex-col">
+        <div className="mb-4 border-b border-gray-700 p-4 text-center text-white">
+          <h2 className="m-0 text-base font-semibold">
+            {sidebarCollapsed ? 'AE' : 'AttendEase'}
+          </h2>
+        </div>
 
-      <Menu
-        theme="dark"
-        mode="inline"
-        items={menuItems}
-        style={{ border: 'none' }}
-      />
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 pb-4">
+          <Menu
+            theme="dark"
+            mode="inline"
+            items={menuItems}
+            style={{ border: 'none' }}
+          />
+        </div>
 
-      <div className="p-4 border-t border-gray-700 absolute bottom-0 w-full text-white text-xs">
-        {!sidebarCollapsed && (
-          <>
-            <p className="m-0 mb-2 font-semibold">{orgInfo?.name}</p>
-          </>
-        )}
+        <div className="border-t border-gray-700 p-4 text-xs text-white">
+          {!sidebarCollapsed && (
+            <>
+              <p className="m-0 mb-2 font-semibold">{orgInfo?.name}</p>
+            </>
+          )}
+        </div>
       </div>
     </Sider>
   );

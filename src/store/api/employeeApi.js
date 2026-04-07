@@ -44,6 +44,14 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Employees'],
     }),
+    deleteEmployees: builder.mutation({
+      query: (ids) => ({
+        url: '/employees',
+        method: 'DELETE',
+        body: { ids },
+      }),
+      invalidatesTags: ['Employees'],
+    }),
     bulkUploadEmployees: builder.mutation({
       query: (formData) => ({
         url: '/employees/bulk-upload',
@@ -74,6 +82,7 @@ export const {
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,
+  useDeleteEmployeesMutation,
   useBulkUploadEmployeesMutation,
   useResendInviteMutation,
   useUpdateLeaveBalanceMutation,

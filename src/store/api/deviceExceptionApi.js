@@ -8,14 +8,22 @@ export const deviceExceptionApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getDeviceExceptions: builder.query({
       query: (params) => ({
-        url: '/device-exceptions',
+        url: '/employees/device-exceptions',
         params,
       }),
       providesTags: ['DeviceExceptions'],
     }),
+    createDeviceException: builder.mutation({
+      query: (body) => ({
+        url: '/employees/device-exceptions',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['DeviceExceptions'],
+    }),
     approveDeviceException: builder.mutation({
       query: ({ id, ...body }) => ({
-        url: `/device-exceptions/${id}/approve`,
+        url: `/employees/device-exceptions/${id}/approve`,
         method: 'PUT',
         body,
       }),
@@ -23,7 +31,7 @@ export const deviceExceptionApi = baseApi.injectEndpoints({
     }),
     rejectDeviceException: builder.mutation({
       query: ({ id, ...body }) => ({
-        url: `/device-exceptions/${id}/reject`,
+        url: `/employees/device-exceptions/${id}/reject`,
         method: 'PUT',
         body,
       }),
@@ -35,6 +43,7 @@ export const deviceExceptionApi = baseApi.injectEndpoints({
 
 export const {
   useGetDeviceExceptionsQuery,
+  useCreateDeviceExceptionMutation,
   useApproveDeviceExceptionMutation,
   useRejectDeviceExceptionMutation,
 } = deviceExceptionApi;
