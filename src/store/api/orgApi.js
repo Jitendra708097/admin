@@ -50,5 +50,5 @@ export const {
   useGetOrgInfoQuery,
   useUpdateOrgProfileMutation,
   useGetOrgSettingsQuery,
-  useUpdateSettingsMutation,
+  useUpdateOrgSettingsMutation: useUpdateSettingsMutation,
 } = orgApi;

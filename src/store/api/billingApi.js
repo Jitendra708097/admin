@@ -39,6 +39,21 @@ export const billingApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Billing'],
     }),
+    createInvoiceOrder: builder.mutation({
+      query: (invoiceId) => ({
+        url: `/billing/invoices/${invoiceId}/create-order`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Billing'],
+    }),
+    verifyInvoicePayment: builder.mutation({
+      query: (body) => ({
+        url: '/billing/verify-payment',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Billing'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -48,5 +63,7 @@ export const {
   useGetAvailablePlansQuery,
   useSubscribeToPlanMutation,
   useGetInvoicesQuery,
-  useDownloadInvoiceQuery,
+  useLazyDownloadInvoiceQuery,
+  useCreateInvoiceOrderMutation,
+  useVerifyInvoicePaymentMutation,
 } = billingApi;

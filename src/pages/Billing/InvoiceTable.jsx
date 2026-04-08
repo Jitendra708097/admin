@@ -3,8 +3,9 @@
  * @description Invoice payment history table.
  */
 import { Table, Button, Tag, Space } from 'antd';
+import { formatCurrency, formatDate } from '../../utils/formatters.js';
 
-export default function InvoiceTable({ data, loading, onDownload }) {
+export default function InvoiceTable({ data, loading, payingInvoiceId, onDownload, onPay }) {
   const columns = [
     {
       title: 'Invoice #',
@@ -15,19 +16,26 @@ export default function InvoiceTable({ data, loading, onDownload }) {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
-      render: (amount) => `$${amount}`,
+      render: (amount, record) => formatCurrency(amount, record.currency || 'INR'),
     },
     {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
+      render: (date) => formatDate(date),
+    },
+    {
+      title: 'Due Date',
+      dataIndex: 'dueDate',
+      key: 'dueDate',
+      render: (date) => (date ? formatDate(date) : '-'),
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
       render: (status) => {
-        const color = status === 'paid' ? 'green' : 'orange';
+        const color = status === 'paid' ? 'green' : status === 'due' ? 'orange' : 'red';
         return <Tag color={color}>{status}</Tag>;
       },
     },
@@ -36,13 +44,22 @@ export default function InvoiceTable({ data, loading, onDownload }) {
       key: 'actions',
       render: (_, record) => (
         <Space>
+          {record.status !== 'paid' && (
+            <Button
+              type="primary"
+              loading={payingInvoiceId === record.id}
+              onClick={() => onPay(record)}
+            >
+              Pay Now
+            </Button>
+          )}
           <Button type="link" onClick={() => onDownload(record.id)}>
-            Download
+            {record.status === 'paid' ? 'Download' : 'Preview'}
           </Button>
         </Space>
       ),
     },
   ];
 
-  return <Table columns={columns} dataSource={data} loading={loading} />;
+  return <Table rowKey="id" columns={columns} dataSource={data} loading={loading} pagination={false} />;
 }

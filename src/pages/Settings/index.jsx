@@ -3,6 +3,7 @@
  * @description Organization settings including profile, attendance config, and password.
  */
 import { Tabs } from 'antd';
+import { useSearchParams } from 'react-router-dom';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import ProfileSettings from './ProfileSettings.jsx';
 import AttendanceSettings from './AttendanceSettings.jsx';
@@ -10,8 +11,11 @@ import PasswordSettings from './PasswordSettings.jsx';
 import { useGetOrgSettingsQuery, useUpdateSettingsMutation } from '../../store/api/orgApi.js';
 
 export default function SettingsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data, isLoading } = useGetOrgSettingsQuery();
   const [updateSettings, { isLoading: isUpdating }] = useUpdateSettingsMutation();
+  const requestedTab = searchParams.get('tab');
+  const activeTab = ['attendance', 'password'].includes(requestedTab) ? requestedTab : 'profile';
 
   const items = [
     {
@@ -53,7 +57,18 @@ export default function SettingsPage() {
       <PageHeader title="Settings" subtitle="Manage organization settings" />
 
       <div className="px-6 py-6 max-w-7xl mx-auto">
-        <Tabs items={items} />
+        <Tabs
+          activeKey={activeTab}
+          items={items}
+          onChange={(key) => {
+            if (key === 'profile') {
+              setSearchParams({});
+              return;
+            }
+
+            setSearchParams({ tab: key });
+          }}
+        />
       </div>
     </div>
   );
