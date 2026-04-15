@@ -2,9 +2,10 @@
  * @module AttendanceTable
  * @description Attendance records table component with full implementation.
  */
-import { Table, Button, Space, Tooltip, Empty, Spin } from 'antd';
+import { Table, Button, Space, Tooltip, Empty } from 'antd';
 import { EyeOutlined, FlagOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import Skeleton from '../../components/common/Skeleton.jsx';
 import { StatusBadge } from '../../components/common/index.js';
 
 export default function AttendanceTable({
@@ -82,7 +83,7 @@ export default function AttendanceTable({
     },
   ];
 
-  if (loading) return <Spin className="py-12" />;
+  if (loading) return <Skeleton />;
   if (!data || data.length === 0) return <Empty description="No attendance records" className="py-12" />;
 
   return (

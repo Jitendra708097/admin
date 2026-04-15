@@ -47,11 +47,23 @@ export const billingApi = baseApi.injectEndpoints({
       invalidatesTags: ['Billing'],
     }),
     verifyInvoicePayment: builder.mutation({
-      query: (body) => ({
-        url: '/billing/verify-payment',
-        method: 'POST',
-        body,
-      }),
+      query: (body) => {
+        const { _idempotencyKey, ...payloadData } = body;
+
+        return {
+          url: '/billing/verify-payment',
+          method: 'POST',
+          body: payloadData,
+          // ✅ Send idempotency key as header if provided
+          ...(
+            _idempotencyKey && {
+              headers: {
+                'Idempotency-Key': _idempotencyKey,
+              },
+            }
+          ),
+        };
+      },
       invalidatesTags: ['Billing'],
     }),
   }),

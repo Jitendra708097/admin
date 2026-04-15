@@ -1,13 +1,14 @@
-import { App, Button, Form, Input, List, Modal, Tag } from 'antd';
+import { App, Button, Form, Input, List, Modal, Tag, Alert } from 'antd';
 import {
   useApproveDeviceExceptionMutation,
   useCreateDeviceExceptionMutation,
   useGetDeviceExceptionsQuery,
   useRejectDeviceExceptionMutation,
 } from '../../store/api/deviceExceptionApi.js';
+import { getErrorRecovery } from '../../utils/errorHandler.js';
 
 export default function DeviceExceptionModal({ open, employee, onClose }) {
-  const { message } = App.useApp();
+  const { message, notification } = App.useApp();
   const [form] = Form.useForm();
   const { data, isLoading } = useGetDeviceExceptionsQuery(
     { empId: employee?.id },
@@ -32,7 +33,12 @@ export default function DeviceExceptionModal({ open, employee, onClose }) {
       if (error?.errorFields) {
         return;
       }
-      message.error(error?.data?.error?.message || 'Unable to create device exception');
+      const recovery = getErrorRecovery(error);
+      notification.error({
+        message: error?.data?.error?.message || 'Unable to create device exception',
+        description: recovery.description,
+        duration: 0,
+      });
     }
   };
 

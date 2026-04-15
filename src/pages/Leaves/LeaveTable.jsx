@@ -4,6 +4,7 @@
  */
 import { Table, Space, Button, Tag, Popconfirm } from 'antd';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import Skeleton from '../../components/common/Skeleton.jsx';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
 
 export default function LeaveTable({ data, loading, onApprove, onReject, pagination }) {
@@ -52,6 +53,18 @@ export default function LeaveTable({ data, loading, onApprove, onReject, paginat
   ];
 
   return (
-    <Table columns={columns} dataSource={data} loading={loading} rowKey="id" pagination={pagination} scroll={{ x: 1000 }} />
+    <>
+      {loading ? (
+        <Skeleton />
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={data}
+          rowKey="id"
+          pagination={pagination}
+          scroll={{ x: 1000 }}
+        />
+      )}
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import { Avatar, Button, Dropdown, Space, Table, Tooltip, Typography } from 'antd';
 import { DeleteOutlined, EditOutlined, MailOutlined, MoreOutlined } from '@ant-design/icons';
+import Skeleton from '../../components/common/Skeleton.jsx';
 import RoleBadge from '../../components/common/RoleBadge.jsx';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
 
@@ -115,25 +116,30 @@ export default function EmployeeTable({
   ];
 
   return (
-    <Table
-      columns={columns}
-      dataSource={data}
-      loading={loading}
-      rowKey="id"
-      rowSelection={{
-        selectedRowKeys,
-        onChange: onSelectionChange,
-      }}
-      pagination={{
-        ...pagination,
-        showSizeChanger: true,
-        showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} employees`,
-        onChange: onPageChange,
-      }}
-      scroll={{ x: 1100 }}
-      locale={{
-        emptyText: 'No employees match the current search and filters.',
-      }}
-    />
+    <>
+      {loading ? (
+        <Skeleton />
+      ) : (
+        <Table
+          columns={columns}
+          dataSource={data}
+          rowKey="id"
+          rowSelection={{
+            selectedRowKeys,
+            onChange: onSelectionChange,
+          }}
+          pagination={{
+            ...pagination,
+            showSizeChanger: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} employees`,
+            onChange: onPageChange,
+          }}
+          scroll={{ x: 1100 }}
+          locale={{
+            emptyText: 'No employees match the current search and filters.',
+          }}
+        />
+      )}
+    </>
   );
 }

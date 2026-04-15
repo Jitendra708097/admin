@@ -1,6 +1,7 @@
-import { Avatar, Card, Col, List, Row, Spin, Tag } from 'antd';
+import { Avatar, Card, Col, List, Row, Tag } from 'antd';
 import { ClockCircleOutlined, TeamOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/common/PageHeader.jsx';
+import Skeleton from '../../components/common/Skeleton.jsx';
 import StatusPieChart from '../../components/charts/StatusPieChart.jsx';
 import LateBarChart from '../../components/charts/LateBarChart.jsx';
 import StatCard from '../../components/StatCard.jsx';
@@ -25,7 +26,13 @@ export default function DashboardPage() {
     { name: 'Late', value: stats?.lateCount || 0 },
   ];
 
-  if (statsLoading || trendLoading || lateLoading || activityLoading) return <Spin className="py-12" />;
+  // Show skeleton loading for stats while loading
+  if (statsLoading) return <Skeleton />;
+  
+  // Show individual skeletons for sections still loading
+  const trendSection = trendLoading ? <Skeleton active paragraph={{ rows: 4 }} /> : <AttendanceTrendChart data={trend} />;
+  const lateSection = lateLoading ? <Skeleton active paragraph={{ rows: 3 }} /> : <LateBarChart data={lateEmployees} />;
+  const activitySection = activityLoading ? <Skeleton /> : null;
 
   return (
     <div className="space-y-6">
@@ -48,11 +55,11 @@ export default function DashboardPage() {
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
-          <AttendanceTrendChart data={trend} />
+          {trendSection}
         </Col>
         <Col xs={24} lg={8}>
           <Card title="Status Distribution" bordered={false} style={{ borderRadius: 16, boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)' }}>
-            <StatusPieChart data={pieData} />
+            {trendLoading ? <Skeleton active /> : <StatusPieChart data={pieData} />}
           </Card>
         </Col>
       </Row>
@@ -60,7 +67,7 @@ export default function DashboardPage() {
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={10}>
           <Card title="Top Late Employees" bordered={false} style={{ borderRadius: 16, boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)' }}>
-            <LateBarChart data={lateEmployees} />
+            {lateSection}
           </Card>
         </Col>
         <Col xs={24} lg={14}>
@@ -83,19 +90,23 @@ export default function DashboardPage() {
       <Row gutter={[16, 16]}>
         <Col xs={24}>
           <Card title="Recent Activity" bordered={false} style={{ borderRadius: 16, boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)' }}>
-            <List
-              dataSource={activity}
-              renderItem={(item) => (
-                <List.Item>
-                  <List.Item.Meta
-                    avatar={<Avatar icon={<ClockCircleOutlined />} />}
-                    title={item.empName || item.action}
-                    description={item.time}
-                  />
-                  <Tag color="blue">{item.action || item.status || 'activity'}</Tag>
-                </List.Item>
-              )}
-            />
+            {activityLoading ? (
+              <Skeleton />
+            ) : (
+              <List
+                dataSource={activity}
+                renderItem={(item) => (
+                  <List.Item>
+                    <List.Item.Meta
+                      avatar={<Avatar icon={<ClockCircleOutlined />} />}
+                      title={item.empName || item.action}
+                      description={item.time}
+                    />
+                    <Tag color="blue">{item.action || item.status || 'activity'}</Tag>
+                  </List.Item>
+                )}
+              />
+            )}
           </Card>
         </Col>
       </Row>

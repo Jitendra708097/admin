@@ -4,7 +4,6 @@
  */
 import { Form, Input, Button, Card, message } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
-import { useState } from 'react';
 
 export default function PasswordSettings({ onSubmit, loading }) {
   const [form] = Form.useForm();

@@ -3,6 +3,7 @@
  * @description Invoice payment history table.
  */
 import { Table, Button, Tag, Space } from 'antd';
+import Skeleton from '../../components/common/Skeleton.jsx';
 import { formatCurrency, formatDate } from '../../utils/formatters.js';
 
 export default function InvoiceTable({ data, loading, payingInvoiceId, onDownload, onPay }) {
@@ -61,5 +62,18 @@ export default function InvoiceTable({ data, loading, payingInvoiceId, onDownloa
     },
   ];
 
-  return <Table rowKey="id" columns={columns} dataSource={data} loading={loading} pagination={false} />;
+  return (
+    <>
+      {loading ? (
+        <Skeleton.Table />
+      ) : (
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={data}
+          pagination={false}
+        />
+      )}
+    </>
+  );
 }

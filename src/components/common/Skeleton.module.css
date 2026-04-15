@@ -1,0 +1,67 @@
+/**
+ * @file Skeleton.module.css
+ * @description Custom styling for Ant Design Skeleton component
+ * Integrates with Tailwind CSS and custom theme
+ */
+
+.skeleton {
+  /* Enhanced visual hierarchy */
+  --skeleton-background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  --skeleton-background-size: 200% 100%;
+  --skeleton-animation: 1.5s ease-in-out infinite;
+
+  background: var(--skeleton-background);
+  background-size: var(--skeleton-background-size);
+  animation: shimmer var(--skeleton-animation);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Reduce motion support */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: #f0f0f0;
+  }
+}
+
+/* Skeleton paragraph styling */
+.skeleton :global(.ant-skeleton-paragraph) {
+  margin-top: 12px;
+}
+
+.skeleton :global(.ant-skeleton-title) {
+  margin-bottom: 12px;
+  height: 20px;
+}
+
+.skeleton :global(.ant-skeleton-avatar) {
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+/* Dark theme support (future) */
+@media (prefers-color-scheme: dark) {
+  .skeleton {
+    --skeleton-background: linear-gradient(
+      90deg,
+      #2a2a2a 25%,
+      #3a3a3a 50%,
+      #2a2a2a 75%
+    );
+  }
+}

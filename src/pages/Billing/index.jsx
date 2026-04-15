@@ -74,6 +74,9 @@ export default function BillingPage() {
   };
 
   const handlePay = async (invoice) => {
+    // ✅ Generate unique idempotency key for this payment attempt
+    const idempotencyKey = `${invoice.id}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    
     setPayingInvoiceId(invoice.id);
 
     try {
@@ -94,19 +97,26 @@ export default function BillingPage() {
         order_id: orderPayload.order.id,
         handler: async (response) => {
           try {
+            // ✅ Send idempotency key with payment verification
             await verifyInvoicePayment({
               invoiceId: invoice.id,
               ...response,
+              _idempotencyKey: idempotencyKey,
             }).unwrap();
+
             message.success('Payment successful');
           } catch (error) {
-            message.error(error?.data?.error?.message || 'Payment verification failed');
+            // ✅ Safe to retry - backend will handle via idempotency key
+            const errorMsg = error?.data?.error?.message || 'Payment verification failed';
+            message.error(errorMsg);
+            console.warn('Payment verification failed. Safe to retry with same key:', idempotencyKey);
           } finally {
             setPayingInvoiceId(null);
           }
         },
         notes: {
           invoiceNumber: orderPayload.invoice.invoiceNumber,
+          idempotencyKey,
         },
         theme: {
           color: '#1677ff',
@@ -114,6 +124,7 @@ export default function BillingPage() {
         modal: {
           ondismiss: () => {
             setPayingInvoiceId(null);
+            message.info('Payment cancelled. You can retry anytime.');
           },
         },
       });
