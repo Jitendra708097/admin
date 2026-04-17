@@ -2,7 +2,7 @@
  * @module AppRouter
  * @description Main application router with all routes and protected routes.
  */
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router';
 import ProtectedRoute from './ProtectedRoute.jsx';
 import AppLayout from '../components/Layout/AppLayout.jsx';
 import LoginPage from '../pages/Auth/LoginPage.jsx';

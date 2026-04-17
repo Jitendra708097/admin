@@ -1,3 +1,11 @@
+.authShell {
+  min-height: 100vh;
+  padding: 24px 16px;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.16), transparent 30%),
+    linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
 /* Auth page styles */
 .loginCard {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
@@ -23,6 +31,11 @@
   font-size: 14px;
 }
 
+.subtitle {
+  margin-bottom: 0;
+  color: #666;
+}
+
 .footer {
   text-align: right;
   margin-top: 16px;
@@ -35,4 +48,25 @@
 
 .footer a:hover {
   text-decoration: underline;
+}
+
+.authLinksRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.authLinksRow a {
+  color: #1677ff;
+  text-decoration: none;
+}
+
+.authLinksRow a:hover {
+  text-decoration: underline;
+}
+
+.inlineLinkButton {
+  padding-inline: 0;
 }

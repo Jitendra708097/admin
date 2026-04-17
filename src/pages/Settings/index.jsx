@@ -3,7 +3,7 @@
  * @description Organization settings including profile, attendance config, and password.
  */
 import { Tabs } from 'antd';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import ProfileSettings from './ProfileSettings.jsx';
 import AttendanceSettings from './AttendanceSettings.jsx';

@@ -3,7 +3,7 @@
  * @description 404 Not Found page.
  */
 import { Result, Button } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 export default function NotFoundPage() {
   const navigate = useNavigate();

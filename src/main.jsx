@@ -7,7 +7,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { App as AntdApp, ConfigProvider } from 'antd';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import './globals.css';
 import { store } from './store/index.js';
 import { antdTheme } from './theme/antdTheme.js';

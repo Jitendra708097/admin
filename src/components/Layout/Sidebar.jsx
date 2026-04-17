@@ -20,7 +20,7 @@ import {
   CreditCardOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
 
 const { Sider } = Layout;

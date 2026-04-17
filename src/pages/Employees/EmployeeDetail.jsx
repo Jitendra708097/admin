@@ -1,6 +1,6 @@
 import { Button, Card, Descriptions, Row, Col, Statistic } from 'antd';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import DeviceExceptionModal from './DeviceExceptionModal.jsx';
 import {

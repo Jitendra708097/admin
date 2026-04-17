@@ -1,6 +1,6 @@
 import { App as AntdApp, Form, Input, Button, Card, Row, Col, Checkbox } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router';
 import { useDispatch } from 'react-redux';
 import { useLoginMutation } from '../../store/api/authApi.js';
 import { setAuth } from '../../store/authSlice.js';
@@ -44,7 +44,7 @@ export default function LoginPage() {
   };
 
   return (
-    <Row justify="center" align="middle" style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+    <Row justify="center" align="middle" className={styles.authShell}>
       <Col xs={22} sm={20} md={12} lg={8}>
         <Card className={styles.loginCard}>
           <div className={styles.logoSection}>

@@ -2,7 +2,7 @@
  * @module AppLayout
  * @description Main layout wrapper with sidebar, header, and content area.
  */
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router';
 import { Layout } from 'antd';
 import OrgSidebar from '../OrgSidebar.jsx';
 import TopNav from '../TopNav.jsx';

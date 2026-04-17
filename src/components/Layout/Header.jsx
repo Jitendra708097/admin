@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { Layout, Dropdown, Badge, Space, Button, Avatar } from 'antd';
 import { LogoutOutlined, SettingOutlined, LockOutlined, BellOutlined, BgColorsOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { logout } from '../../store/authSlice.js';
 import NotificationBell from './NotificationBell.jsx';
 
