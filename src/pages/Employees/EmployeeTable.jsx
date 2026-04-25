@@ -1,5 +1,5 @@
 import { Avatar, Button, Dropdown, Space, Table, Tooltip, Typography } from 'antd';
-import { DeleteOutlined, EditOutlined, MailOutlined, MoreOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, DeleteOutlined, EditOutlined, MailOutlined, MoreOutlined, StopOutlined } from '@ant-design/icons';
 import Skeleton from '../../components/common/Skeleton.jsx';
 import RoleBadge from '../../components/common/RoleBadge.jsx';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
@@ -9,6 +9,7 @@ export default function EmployeeTable({
   loading,
   onEdit,
   onDelete,
+  onToggleStatus,
   onResendInvite,
   onPageChange,
   onSelectionChange,
@@ -96,6 +97,12 @@ export default function EmployeeTable({
                 icon: <MailOutlined />,
                 label: 'Resend Invite',
                 onClick: () => onResendInvite?.(record.id),
+              },
+              {
+                key: 'toggle-status',
+                icon: record.status === 'active' ? <StopOutlined /> : <CheckCircleOutlined />,
+                label: record.status === 'active' ? 'Suspend' : 'Activate',
+                onClick: () => onToggleStatus?.(record),
               },
               {
                 key: 'delete',

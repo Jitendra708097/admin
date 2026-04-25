@@ -65,7 +65,7 @@ export default function InvoiceTable({ data, loading, payingInvoiceId, onDownloa
   return (
     <>
       {loading ? (
-        <Skeleton.Table />
+        <Skeleton active paragraph={{ rows: 5 }} />
       ) : (
         <Table
           rowKey="id"

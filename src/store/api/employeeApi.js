@@ -21,6 +21,19 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Employees'],
     }),
+    getEmployeeFaceStatus: builder.query({
+      query: (id) => ({
+        url: `/face/status/${id}`,
+      }),
+      providesTags: ['Employees'],
+    }),
+    resetEmployeeFaceEnrollment: builder.mutation({
+      query: (id) => ({
+        url: `/face/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Employees'],
+    }),
     createEmployee: builder.mutation({
       query: (body) => ({
         url: '/employees',
@@ -79,6 +92,8 @@ export const {
   useGetEmployeesQuery,
   useGetEmployeeDetailQuery,
   useGetEmployeeAttendanceSummaryQuery,
+  useGetEmployeeFaceStatusQuery,
+  useResetEmployeeFaceEnrollmentMutation,
   useCreateEmployeeMutation,
   useUpdateEmployeeMutation,
   useDeleteEmployeeMutation,

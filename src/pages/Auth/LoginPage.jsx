@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { App as AntdApp, Form, Input, Button, Card, Row, Col, Checkbox } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router';
@@ -14,6 +15,39 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const [login, { isLoading }] = useLoginMutation();
 
+  useEffect(() => {
+    const hash = window.location.hash || '';
+
+    if (!hash.startsWith('#impersonation=')) {
+      return;
+    }
+
+    try {
+      const encodedPayload = decodeURIComponent(hash.slice('#impersonation='.length));
+      const decodedPayload = JSON.parse(decodeURIComponent(escape(window.atob(encodedPayload))));
+
+      if (!decodedPayload?.accessToken || !decodedPayload?.user) {
+        throw new Error('Invalid impersonation handoff');
+      }
+
+      dispatch(
+        setAuth({
+          user: decodedPayload.user,
+          accessToken: decodedPayload.accessToken,
+          refreshToken: null,
+          org: decodedPayload.org || { id: decodedPayload.user.orgId, name: decodedPayload.user.orgName },
+        })
+      );
+
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      message.success('Support session active');
+      navigate('/dashboard', { replace: true });
+    } catch (error) {
+      message.error('Unable to start support session');
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, [dispatch, message, navigate]);
+
   const onFinish = async (values) => {
     try {
       const response = await login({
@@ -25,6 +59,10 @@ export default function LoginPage() {
 
       if (!authPayload?.employee || !authPayload?.accessToken || !authPayload?.refreshToken) {
         throw new Error('Invalid login response');
+      }
+
+      if (!['admin', 'manager', 'superadmin'].includes(authPayload.employee.role)) {
+        throw new Error('This account does not have admin portal access');
       }
 
       dispatch(

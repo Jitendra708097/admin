@@ -16,6 +16,8 @@ const STATUS_CONFIG = {
   pending: { color: '#faad14', label: 'Pending' },
   approved: { color: '#52c41a', label: 'Approved' },
   rejected: { color: '#ff4d4f', label: 'Rejected' },
+  active: { color: '#52c41a', label: 'Active' },
+  inactive: { color: '#8c8c8c', label: 'Inactive' },
 };
 
 export default function StatusBadge({ status }) {

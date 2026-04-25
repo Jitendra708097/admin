@@ -3,9 +3,14 @@
  * @description Protected route that redirects to login if not authenticated.
  */
 import { Navigate, Outlet } from 'react-router';
-import { useSelector } from 'react-redux';
+import { useAuth } from '../hooks/useAuth.js';
 
 export default function ProtectedRoute() {
-  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+  const { isAuthenticated, canAccessAdminPortal } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return canAccessAdminPortal ? <Outlet /> : <Navigate to="/login" replace />;
 }

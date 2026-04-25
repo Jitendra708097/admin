@@ -3,20 +3,37 @@
  * @description Department hierarchy management.
  */
 import { useState } from 'react';
-import { Card, Button } from 'antd';
+import { App, Card, Button, Spin } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import DepartmentTree from './DepartmentTree.jsx';
 import DepartmentForm from './DepartmentForm.jsx';
-import { useGetDepartmentsQuery, useCreateDepartmentMutation, useDeleteDepartmentMutation } from '../../store/api/departmentApi.js';
+import {
+  useGetDepartmentsQuery,
+  useCreateDepartmentMutation,
+  useUpdateDepartmentMutation,
+  useDeleteDepartmentMutation,
+} from '../../store/api/departmentApi.js';
+import { parseApiError } from '../../utils/errorHandler.js';
 
 export default function DepartmentsPage() {
+  const { message } = App.useApp();
   const [selectedDept, setSelectedDept] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
   const { data, isLoading } = useGetDepartmentsQuery();
   const [createDept, { isLoading: isCreating }] = useCreateDepartmentMutation();
+  const [updateDept, { isLoading: isUpdating }] = useUpdateDepartmentMutation();
   const [deleteDept] = useDeleteDepartmentMutation();
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteDept(id).unwrap();
+      message.success('Department deleted successfully');
+    } catch (error) {
+      message.error(parseApiError(error));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -39,26 +56,47 @@ export default function DepartmentsPage() {
       />
 
       <Card className="m-6">
-        <DepartmentTree
-          data={data?.departments || []}
-          onAdd={(parentId) => console.log('Add under:', parentId)}
-          onEdit={(dept) => {
-            setSelectedDept(dept);
-            setShowForm(true);
-          }}
-          onDelete={(id) => deleteDept(id)}
-        />
+        <Spin spinning={isLoading}>
+          <DepartmentTree
+            data={data?.departments || []}
+            onAdd={(department) => {
+              setSelectedDept({ parentId: department.id });
+              setShowForm(true);
+            }}
+            onEdit={(dept) => {
+              setSelectedDept(dept);
+              setShowForm(true);
+            }}
+            onDelete={handleDelete}
+          />
+        </Spin>
       </Card>
 
       <DepartmentForm
         open={showForm}
         department={selectedDept}
-        onClose={() => setShowForm(false)}
-        onSubmit={(values) => {
-          createDept(values);
+        departments={data?.departments || []}
+        onClose={() => {
+          setSelectedDept(null);
           setShowForm(false);
         }}
-        loading={isCreating}
+        onSubmit={async (values) => {
+          try {
+            if (selectedDept?.id) {
+              await updateDept({ id: selectedDept.id, ...values }).unwrap();
+              message.success('Department updated successfully');
+            } else {
+              await createDept(values).unwrap();
+              message.success('Department created successfully');
+            }
+
+            setSelectedDept(null);
+            setShowForm(false);
+          } catch (error) {
+            message.error(parseApiError(error));
+          }
+        }}
+        loading={isCreating || isUpdating}
       />
     </div>
   );

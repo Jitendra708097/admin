@@ -19,6 +19,7 @@ import {
   useBulkUploadEmployeesMutation,
 } from '../../store/api/employeeApi.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
+import { parseApiError } from '../../utils/errorHandler.js';
 import styles from './employees.module.css';
 
 export default function EmployeesPage() {
@@ -76,6 +77,21 @@ export default function EmployeesPage() {
     await deleteEmployees(selectedRowKeys).unwrap();
     setSelectedRowKeys([]);
     message.success(`${selectedRowKeys.length} employees deleted`);
+  };
+
+  const handleToggleStatus = async (employee) => {
+    const nextIsActive = employee.status !== 'active';
+
+    try {
+      await updateEmployee({
+        id: employee.id,
+        isActive: nextIsActive,
+      }).unwrap();
+
+      message.success(`${employee.name} ${nextIsActive ? 'activated' : 'suspended'} successfully`);
+    } catch (error) {
+      message.error(parseApiError(error));
+    }
   };
 
   return (
@@ -241,6 +257,7 @@ export default function EmployeesPage() {
             setShowForm(true);
           }}
           onDelete={(id) => deleteEmployee(id)}
+          onToggleStatus={handleToggleStatus}
           onResendInvite={(id) => resendInvite(id)}
           onPageChange={(page, pageSize) => setPagination({ current: page, pageSize })}
           onSelectionChange={setSelectedRowKeys}

@@ -36,7 +36,7 @@ export const useNotifications = () => {
 
   return {
     notifications: notifications?.notifications || [],
-    unreadCount: unreadCount?.count || 0,
+    unreadCount: unreadCount?.unreadCount || unreadCount?.count || 0,
     bellOpen,
     setBellOpen,
     isLoading: notificationsLoading || unreadCountLoading,

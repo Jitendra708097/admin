@@ -2,26 +2,45 @@
  * @module DepartmentForm
  * @description Form to create/edit departments.
  */
-import { Form, Input, Button, Modal } from 'antd';
-import { useState, useEffect } from 'react';
+import { Form, Input, Modal, Select } from 'antd';
+import { useEffect, useMemo } from 'react';
 
-export default function DepartmentForm({ open, department, onClose, onSubmit, loading }) {
+function flattenDepartments(departments = [], level = 0) {
+  return departments.flatMap((department) => [
+    {
+      label: `${'-- '.repeat(level)}${department.name}`,
+      value: department.id,
+    },
+    ...flattenDepartments(department.children || [], level + 1),
+  ]);
+}
+
+export default function DepartmentForm({ open, department, departments, onClose, onSubmit, loading }) {
   const [form] = Form.useForm();
+  const parentOptions = useMemo(() => flattenDepartments(departments), [departments]);
 
   useEffect(() => {
+    if (!open) {
+      return;
+    }
+
     if (department) {
-      form.setFieldsValue(department);
+      form.setFieldsValue({
+        name: department.name || '',
+        parentId: department.parentId || undefined,
+      });
     } else {
       form.resetFields();
     }
-  }, [department, form]);
+  }, [department, form, open]);
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      onSubmit(values);
+      await onSubmit(values);
+      form.resetFields();
     } catch (error) {
-      console.error('Validation failed:', error);
+      return error;
     }
   };
 
@@ -32,6 +51,7 @@ export default function DepartmentForm({ open, department, onClose, onSubmit, lo
       onCancel={onClose}
       onOk={handleSubmit}
       confirmLoading={loading}
+      destroyOnClose
     >
       <Form form={form} layout="vertical">
         <Form.Item
@@ -41,11 +61,14 @@ export default function DepartmentForm({ open, department, onClose, onSubmit, lo
         >
           <Input />
         </Form.Item>
-        <Form.Item name="code" label="Department Code">
-          <Input />
-        </Form.Item>
-        <Form.Item name="description" label="Description">
-          <Input.TextArea rows={3} />
+        <Form.Item name="parentId" label="Parent Department">
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            options={parentOptions.filter((option) => option.value !== department?.id)}
+            placeholder="Top level department"
+          />
         </Form.Item>
       </Form>
     </Modal>

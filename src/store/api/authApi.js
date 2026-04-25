@@ -34,6 +34,13 @@ export const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Org', 'Employees', 'Attendance', 'Leaves', 'Regularisations'],
     }),
+    changePassword: builder.mutation({
+      query: (body) => ({
+        url: '/auth/change-password',
+        method: 'POST',
+        body,
+      }),
+    }),
     refresh: builder.mutation({
       query: (body) => ({
         url: '/auth/refresh',
@@ -50,5 +57,6 @@ export const {
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useLogoutMutation,
+  useChangePasswordMutation,
   useRefreshMutation,
 } = authApi;

@@ -34,6 +34,10 @@ const authSlice = createSlice({
       storage.set('accessToken', action.payload.accessToken);
       storage.set('refreshToken', action.payload.refreshToken);
     },
+    setOrgInfo: (state, action) => {
+      state.orgInfo = action.payload;
+      storage.set('orgInfo', action.payload);
+    },
     logout: (state) => {
       state.user = null;
       state.accessToken = null;
@@ -45,5 +49,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setAuth, setTokens, logout } = authSlice.actions;
+export const { setAuth, setTokens, setOrgInfo, logout } = authSlice.actions;
 export default authSlice.reducer;

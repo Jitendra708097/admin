@@ -27,6 +27,19 @@ export const orgApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Org'],
     }),
+    uploadOrgLogo: builder.mutation({
+      query: (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        return {
+          url: '/org/logo',
+          method: 'POST',
+          body: formData,
+        };
+      },
+      invalidatesTags: ['Org'],
+    }),
     getOrgSettings: builder.query({
       query: () => ({
         url: '/org/settings',
@@ -49,6 +62,9 @@ export const {
   useGetOrgStatsQuery,
   useGetOrgInfoQuery,
   useUpdateOrgProfileMutation,
+  useUploadOrgLogoMutation,
   useGetOrgSettingsQuery,
-  useUpdateOrgSettingsMutation: useUpdateSettingsMutation,
+  useUpdateOrgSettingsMutation,
 } = orgApi;
+
+export const useUpdateSettingsMutation = useUpdateOrgSettingsMutation;

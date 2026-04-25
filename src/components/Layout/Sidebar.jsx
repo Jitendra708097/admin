@@ -22,6 +22,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
 import { useSelector } from 'react-redux';
+import { useGetOrgSettingsQuery } from '../../store/api/orgApi.js';
 
 const { Sider } = Layout;
 
@@ -29,6 +30,8 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const sidebarCollapsed = useSelector((state) => state.ui?.sidebarCollapsed || false);
   const orgInfo = useSelector((state) => state.auth?.orgInfo || {});
+  const { data } = useGetOrgSettingsQuery();
+  const org = data?.org || orgInfo || {};
 
   const menuItems = [
     {
@@ -89,18 +92,6 @@ export default function Sidebar() {
       onClick: () => navigate('/departments'),
     },
     {
-      key: '/holidays',
-      icon: <GiftOutlined />,
-      label: 'Holidays',
-      onClick: () => navigate('/holidays'),
-    },
-    {
-      key: '/reports',
-      icon: <FileTextOutlined />,
-      label: 'Reports',
-      onClick: () => navigate('/reports'),
-    },
-    {
       key: '/notifications',
       icon: <BellOutlined />,
       label: 'Notifications',
@@ -137,9 +128,24 @@ export default function Sidebar() {
     >
       <div className="flex h-full flex-col">
         <div className="mb-4 border-b border-gray-700 p-4 text-center text-white">
-          <h2 className="m-0 text-base font-semibold">
-            {sidebarCollapsed ? 'AE' : 'AttendEase'}
-          </h2>
+          {org?.logo ? (
+            <div className="flex flex-col items-center gap-2">
+              <img
+                src={org.logo}
+                alt={org?.name || 'Organization logo'}
+                className={`${sidebarCollapsed ? 'h-10 w-10' : 'h-16 w-16'} rounded-xl bg-white object-cover p-1`}
+              />
+              {!sidebarCollapsed ? (
+                <h2 className="m-0 text-base font-semibold">
+                  {org?.name || 'AttendEase'}
+                </h2>
+              ) : null}
+            </div>
+          ) : (
+            <h2 className="m-0 text-base font-semibold">
+              {sidebarCollapsed ? 'AE' : 'AttendEase'}
+            </h2>
+          )}
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 pb-4">
@@ -154,7 +160,7 @@ export default function Sidebar() {
         <div className="border-t border-gray-700 p-4 text-xs text-white">
           {!sidebarCollapsed && (
             <>
-              <p className="m-0 mb-2 font-semibold">{orgInfo?.name}</p>
+              <p className="m-0 mb-2 font-semibold">{org?.name}</p>
             </>
           )}
         </div>
