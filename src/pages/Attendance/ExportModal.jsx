@@ -4,18 +4,26 @@
  */
 import { Modal, Form, Button, Space, DatePicker, Select, message } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
 
-export default function ExportModal({ open, loading, onExport, onCancel }) {
+export default function ExportModal({
+  open,
+  loading,
+  onExport,
+  onCancel,
+  branchOptions = [],
+  employeeOptions = [],
+  initialValues = {},
+}) {
   const [form] = Form.useForm();
 
   const handleExport = async () => {
     try {
       const values = await form.validateFields();
-      onExport(values);
-      message.success('Export started');
+      await onExport(values);
     } catch (error) {
-      console.error('Validation failed:', error);
+      if (!error?.errorFields) {
+        message.error(error?.message || 'Export failed');
+      }
     }
   };
 
@@ -34,7 +42,12 @@ export default function ExportModal({ open, loading, onExport, onCancel }) {
         </Button>,
       ]}
     >
-      <Form form={form} layout="vertical">
+      <Form
+        form={form}
+        layout="vertical"
+        initialValues={initialValues}
+        key={open ? 'open' : 'closed'}
+      >
         <Form.Item
           name="dateRange"
           label="Date Range"
@@ -44,11 +57,11 @@ export default function ExportModal({ open, loading, onExport, onCancel }) {
         </Form.Item>
 
         <Form.Item name="branch" label="Branch">
-          <Select placeholder="All branches" />
+          <Select placeholder="All branches" options={branchOptions} allowClear showSearch optionFilterProp="label" />
         </Form.Item>
 
-        <Form.Item name="employee" label="Employee">
-          <Select placeholder="All employees" />
+        <Form.Item name="employeeId" label="Employee">
+          <Select placeholder="All employees" options={employeeOptions} allowClear showSearch optionFilterProp="label" />
         </Form.Item>
 
         <Form.Item name="format" label="Format" initialValue="csv">

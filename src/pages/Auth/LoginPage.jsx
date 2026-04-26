@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { App as AntdApp, Form, Input, Button, Card, Row, Col, Checkbox } from 'antd';
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router';
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const { message } = AntdApp.useApp();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [loginError, setLoginError] = useState('');
   const [login, { isLoading }] = useLoginMutation();
 
   useEffect(() => {
@@ -49,13 +50,18 @@ export default function LoginPage() {
   }, [dispatch, message, navigate]);
 
   const onFinish = async (values) => {
+    setLoginError('');
     try {
       const response = await login({
         email: values.email,
         password: values.password,
       }).unwrap();
 
-      const authPayload = response?.employee ? response : response?.data;
+      const authPayload = response?.employee
+        ? response
+        : response?.user && response?.accessToken && response?.refreshToken
+          ? { ...response, employee: response.user }
+          : response?.data;
 
       if (!authPayload?.employee || !authPayload?.accessToken || !authPayload?.refreshToken) {
         throw new Error('Invalid login response');
@@ -77,7 +83,9 @@ export default function LoginPage() {
       message.success('Login successful');
       navigate('/dashboard');
     } catch (error) {
-      message.error(parseApiError(error));
+      const parsedError = parseApiError(error);
+      setLoginError(parsedError);
+      message.error(parsedError);
     }
   };
 
@@ -89,6 +97,12 @@ export default function LoginPage() {
             <h1>AttendEase</h1>
             <p>Admin Portal</p>
           </div>
+
+          {loginError ? (
+            <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {loginError}
+            </div>
+          ) : null}
 
           <Form form={form} layout="vertical" onFinish={onFinish}>
             <Form.Item

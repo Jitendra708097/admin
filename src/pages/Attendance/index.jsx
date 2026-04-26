@@ -3,9 +3,10 @@
  * @description Attendance list with filters, date range picker, and export options.
  */
 import { useMemo, useState } from 'react';
-import { Card, Button, Row, Col, DatePicker, Select } from 'antd';
+import { Card, Button, Row, Col, DatePicker, Select, message } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import axiosInstance from '../../api/axiosInstance.js';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import AttendanceTable from './AttendanceTable.jsx';
 import AttendanceDetail from './AttendanceDetail.jsx';
@@ -25,6 +26,28 @@ const STATUS_OPTIONS = [
   { label: 'Not Marked', value: 'not_marked' },
 ];
 
+function getFilenameFromDisposition(headerValue, fallback) {
+  const match = /filename="?([^"]+)"?/i.exec(headerValue || '');
+  return match ? match[1] : fallback;
+}
+
+function getFallbackExportFilename(contentType, baseName) {
+  return contentType?.includes('spreadsheetml')
+    ? `${baseName}.xlsx`
+    : `${baseName}.csv`;
+}
+
+function downloadBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export default function AttendancePage() {
   const [filters, setFilters] = useState({
     dateRange: null,
@@ -35,6 +58,7 @@ export default function AttendancePage() {
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
   const { data, isLoading } = useGetAttendanceQuery({
@@ -67,9 +91,36 @@ export default function AttendancePage() {
     setPagination((current) => ({ ...current, current: 1 }));
   };
 
-  const handleExport = (values) => {
-    console.log('Exporting with:', values);
-    setShowExport(false);
+  const handleExport = async (values) => {
+    const [fromDate, toDate] = values.dateRange || [];
+    try {
+      setExporting(true);
+      const response = await axiosInstance.get('/attendance/export', {
+        params: {
+          branch: values.branch,
+          employeeId: values.employeeId,
+          status: filters.status,
+          dateFrom: fromDate ? dayjs(fromDate).format('YYYY-MM-DD') : undefined,
+          dateTo: toDate ? dayjs(toDate).format('YYYY-MM-DD') : undefined,
+          format: values.format || 'csv',
+        },
+        responseType: 'blob',
+      });
+
+      downloadBlob(
+        response.data,
+        getFilenameFromDisposition(
+          response.headers['content-disposition'],
+          getFallbackExportFilename(response.headers['content-type'], 'attendance-export')
+        )
+      );
+      setShowExport(false);
+      message.success('Attendance export downloaded');
+    } catch (error) {
+      message.error(error.response?.data?.error?.message || 'Attendance export failed');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const actions = [
@@ -166,9 +217,17 @@ export default function AttendancePage() {
 
       <ExportModal
         open={showExport}
-        loading={false}
+        loading={exporting}
         onExport={handleExport}
         onCancel={() => setShowExport(false)}
+        branchOptions={branchOptions}
+        employeeOptions={employeeOptions}
+        initialValues={{
+          branch: filters.branch,
+          employeeId: filters.employeeId,
+          dateRange: filters.dateRange,
+          format: 'csv',
+        }}
       />
     </div>
   );

@@ -79,7 +79,27 @@ export const clearErrorLog = () => {
  */
 export const parseApiError = (error) => {
   const code = error?.data?.error?.code;
-  return ERROR_MESSAGES[code] || error?.data?.error?.message || 'Something went wrong.';
+  if (ERROR_MESSAGES[code]) {
+    return ERROR_MESSAGES[code];
+  }
+
+  if (error?.data?.error?.message) {
+    return error.data.error.message;
+  }
+
+  if (error?.data?.message) {
+    return error.data.message;
+  }
+
+  if (error?.message) {
+    return error.message;
+  }
+
+  if (!error?.status) {
+    return 'Unable to reach the server. Please check your connection and try again.';
+  }
+
+  return 'Something went wrong.';
 };
 
 /**
