@@ -36,7 +36,9 @@ export default function LiveAttendanceTable({ data = [], loading = false }) {
       title: 'Selfie',
       key: 'selfie',
       render: (_, record) =>
-        record.selfieUrl ? <Avatar shape="square" src={record.selfieUrl} size={44} /> : <Tag>Pending</Tag>,
+        record.selfieUrl
+          ? <Avatar shape="square" src={record.selfieUrl} size={44} />
+          : <Tag>{record.isCheckedIn ? 'Pending' : 'Unavailable'}</Tag>,
     },
   ];
 

@@ -14,6 +14,7 @@ export const baseApi = createApi({
         method: args.method || 'GET',
         data: args.body,
         params: args.params,
+        headers: args.headers,
       });
       return { data: result.data.data };
     } catch (error) {
@@ -39,6 +40,7 @@ export const baseApi = createApi({
     'DeviceExceptions',
     'Billing',
     'Reports',
+    'Dashboard',
   ],
   endpoints: () => ({}),
 });

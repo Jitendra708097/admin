@@ -26,6 +26,26 @@ export const reportApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Reports'],
     }),
+    getReportJobs: builder.query({
+      query: () => ({
+        url: '/reports/jobs',
+      }),
+      providesTags: ['Reports'],
+    }),
+    cancelReportJob: builder.mutation({
+      query: (jobId) => ({
+        url: `/reports/jobs/${jobId}/cancel`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Reports'],
+    }),
+    deleteReportJob: builder.mutation({
+      query: (jobId) => ({
+        url: `/reports/jobs/${jobId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Reports'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -34,4 +54,8 @@ export const {
   useGenerateReportMutation,
   useGetReportJobStatusQuery,
   useDownloadReportQuery,
+  useLazyDownloadReportQuery,
+  useGetReportJobsQuery,
+  useCancelReportJobMutation,
+  useDeleteReportJobMutation,
 } = reportApi;

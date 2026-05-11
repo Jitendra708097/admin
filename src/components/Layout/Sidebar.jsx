@@ -92,6 +92,18 @@ export default function Sidebar() {
       onClick: () => navigate('/departments'),
     },
     {
+      key: '/holidays',
+      icon: <GiftOutlined />,
+      label: 'Holidays',
+      onClick: () => navigate('/holidays'),
+    },
+    {
+      key: '/reports',
+      icon: <FileTextOutlined />,
+      label: 'Reports',
+      onClick: () => navigate('/reports'),
+    },
+    {
       key: '/notifications',
       icon: <BellOutlined />,
       label: 'Notifications',

@@ -6,21 +6,24 @@ import { useMemo, useState } from 'react';
 import { Card, Button, Row, Col, DatePicker, Select, message } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useSearchParams } from 'react-router';
 import axiosInstance from '../../api/axiosInstance.js';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import AttendanceTable from './AttendanceTable.jsx';
 import AttendanceDetail from './AttendanceDetail.jsx';
 import ExportModal from './ExportModal.jsx';
-import { useGetAttendanceQuery } from '../../store/api/attendanceApi.js';
+import { useGetAttendanceQuery, useGetAttendanceDetailQuery } from '../../store/api/attendanceApi.js';
 import { useGetBranchesQuery } from '../../store/api/branchApi.js';
 import { useGetEmployeesQuery } from '../../store/api/employeeApi.js';
 
 const STATUS_OPTIONS = [
   { label: 'Present', value: 'present' },
+  { label: 'Pending', value: 'pending' },
   { label: 'Absent', value: 'absent' },
   { label: 'Half Day', value: 'half_day' },
   { label: 'Half Day Early', value: 'half_day_early' },
   { label: 'On Leave', value: 'on_leave' },
+  { label: 'Incomplete', value: 'incomplete' },
   { label: 'Holiday', value: 'holiday' },
   { label: 'Weekend', value: 'weekend' },
   { label: 'Not Marked', value: 'not_marked' },
@@ -49,11 +52,14 @@ function downloadBlob(blob, filename) {
 }
 
 export default function AttendancePage() {
+  const [searchParams] = useSearchParams();
+  const notificationDate = searchParams.get('date');
   const [filters, setFilters] = useState({
-    dateRange: null,
-    branch: undefined,
-    status: undefined,
-    employeeId: undefined,
+    dateRange: notificationDate ? [dayjs(notificationDate), dayjs(notificationDate)] : null,
+    branch: searchParams.get('branch') || undefined,
+    status: searchParams.get('status') || undefined,
+    employeeId: searchParams.get('employeeId') || undefined,
+    isLate: searchParams.get('isLate') || undefined,
   });
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -66,9 +72,13 @@ export default function AttendancePage() {
     limit: pagination.pageSize,
     branch: filters.branch,
     status: filters.status,
+    isLate: filters.isLate,
     employeeId: filters.employeeId,
     dateFrom: filters.dateRange?.[0] ? dayjs(filters.dateRange[0]).format('YYYY-MM-DD') : undefined,
     dateTo: filters.dateRange?.[1] ? dayjs(filters.dateRange[1]).format('YYYY-MM-DD') : undefined,
+  });
+  const { data: attendanceDetail, isLoading: isDetailLoading } = useGetAttendanceDetailQuery(selectedRecord?.id, {
+    skip: !selectedRecord?.id || !showDetail || selectedRecord?.isSyntheticNotMarked,
   });
   const { data: branches } = useGetBranchesQuery();
   const { data: employeesData } = useGetEmployeesQuery({ limit: 100 });
@@ -85,6 +95,12 @@ export default function AttendancePage() {
       })) || [],
     [employeesData]
   );
+  const selectedAttendanceDetail = attendanceDetail
+    ? {
+        ...attendanceDetail,
+        employee: selectedRecord?.employee || null,
+      }
+    : selectedRecord;
 
   const handleFilterChange = (nextFilters) => {
     setFilters((current) => ({ ...current, ...nextFilters }));
@@ -166,7 +182,7 @@ export default function AttendancePage() {
               style={{ width: '100%' }}
               allowClear
               value={filters.status}
-              onChange={(value) => handleFilterChange({ status: value })}
+              onChange={(value) => handleFilterChange({ status: value, isLate: undefined })}
               options={STATUS_OPTIONS}
             />
           </Col>
@@ -211,7 +227,8 @@ export default function AttendancePage() {
 
       <AttendanceDetail
         open={showDetail}
-        data={selectedRecord}
+        data={selectedAttendanceDetail}
+        loading={isDetailLoading}
         onClose={() => setShowDetail(false)}
       />
 

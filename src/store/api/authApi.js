@@ -13,6 +13,19 @@ export const authApi = baseApi.injectEndpoints({
         body,
       }),
     }),
+    exchangeImpersonationCode: builder.mutation({
+      query: (body) => ({
+        url: '/auth/impersonation/exchange',
+        method: 'POST',
+        body,
+      }),
+    }),
+    exitImpersonation: builder.mutation({
+      query: () => ({
+        url: '/auth/impersonation/exit',
+        method: 'POST',
+      }),
+    }),
     forgotPassword: builder.mutation({
       query: (body) => ({
         url: '/auth/forgot-password',
@@ -54,6 +67,8 @@ export const authApi = baseApi.injectEndpoints({
 
 export const {
   useLoginMutation,
+  useExchangeImpersonationCodeMutation,
+  useExitImpersonationMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useLogoutMutation,

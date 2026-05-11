@@ -3,7 +3,7 @@
  * @description Top header bar with notifications, profile, admin info, and theme toggle.
  */
 import { useState, useEffect } from 'react';
-import { Layout, Dropdown, Badge, Space, Button, Avatar } from 'antd';
+import { Layout, Dropdown, Badge, Space, Button, Avatar, Tag } from 'antd';
 import { LogoutOutlined, SettingOutlined, LockOutlined, BellOutlined, BgColorsOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
@@ -64,7 +64,10 @@ export default function AppHeader() {
   return (
     <Header className="flex h-auto shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
       <div>
-        <h2 className="m-0 text-lg font-semibold text-gray-900">AttendEase Admin</h2>
+        <Space>
+          <h2 className="m-0 text-lg font-semibold text-gray-900">AttendEase Admin</h2>
+          {user?.isImpersonated ? <Tag color="warning">Superadmin Support Mode</Tag> : null}
+        </Space>
       </div>
 
       <Space size="large">

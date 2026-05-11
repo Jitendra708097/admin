@@ -2,7 +2,7 @@
  * @module LeaveCalendar
  * @description Team leave calendar view.
  */
-import { Calendar, Tag, Empty, Card, Select } from 'antd';
+import { Calendar, Tag } from 'antd';
 import dayjs from 'dayjs';
 
 const LEAVE_TYPE_COLORS = {
@@ -39,5 +39,5 @@ export default function LeaveCalendar({ leaves, onDateSelect }) {
     );
   };
 
-  return <Calendar fullscreen dateCellRender={dateCellRender} />;
+  return <Calendar fullscreen dateCellRender={dateCellRender} onSelect={onDateSelect} />;
 }

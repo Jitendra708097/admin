@@ -2,34 +2,34 @@
  * @module HolidayForm
  * @description Form to create/edit holidays.
  */
-import { Form, Input, Button, Modal, DatePicker } from 'antd';
-import { useState, useEffect } from 'react';
+import { Checkbox, DatePicker, Form, Input, Modal, Select } from 'antd';
+import { useEffect } from 'react';
 import dayjs from 'dayjs';
 
-export default function HolidayForm({ open, holiday, onClose, onSubmit, loading }) {
+export default function HolidayForm({ open, holiday, branches = [], onClose, onSubmit, loading }) {
   const [form] = Form.useForm();
 
   useEffect(() => {
-    if (holiday) {
+    if (open && holiday) {
       form.setFieldsValue({
         ...holiday,
         date: dayjs(holiday.date),
+        branchId: holiday.branchId || null,
       });
-    } else {
+    } else if (open) {
       form.resetFields();
+      form.setFieldsValue({ branchId: null, isRecurring: false });
     }
-  }, [holiday, form]);
+  }, [holiday, form, open]);
 
   const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      onSubmit({
-        ...values,
-        date: values.date.format('YYYY-MM-DD'),
-      });
-    } catch (error) {
-      console.error('Validation failed:', error);
-    }
+    const values = await form.validateFields();
+    await onSubmit({
+      ...values,
+      branchId: values.branchId || null,
+      date: values.date.format('YYYY-MM-DD'),
+      isRecurring: Boolean(values.isRecurring),
+    });
   };
 
   return (
@@ -39,6 +39,7 @@ export default function HolidayForm({ open, holiday, onClose, onSubmit, loading 
       onCancel={onClose}
       onOk={handleSubmit}
       confirmLoading={loading}
+      destroyOnClose
     >
       <Form form={form} layout="vertical">
         <Form.Item
@@ -46,17 +47,30 @@ export default function HolidayForm({ open, holiday, onClose, onSubmit, loading 
           label="Holiday Name"
           rules={[{ required: true }]}
         >
-          <Input />
+          <Input placeholder="Example: Republic Day" />
         </Form.Item>
         <Form.Item
           name="date"
           label="Date"
           rules={[{ required: true }]}
         >
-          <DatePicker />
+          <DatePicker style={{ width: '100%' }} />
+        </Form.Item>
+        <Form.Item name="branchId" label="Scope">
+          <Select
+            allowClear
+            placeholder="All branches"
+            options={[
+              { label: 'All branches', value: null },
+              ...branches.map((branch) => ({ label: branch.name, value: branch.id })),
+            ]}
+          />
         </Form.Item>
         <Form.Item name="description" label="Description">
-          <Input.TextArea rows={3} />
+          <Input.TextArea rows={3} placeholder="Optional note for admins" />
+        </Form.Item>
+        <Form.Item name="isRecurring" valuePropName="checked">
+          <Checkbox>Repeats every year</Checkbox>
         </Form.Item>
       </Form>
     </Modal>

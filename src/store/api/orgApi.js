@@ -40,9 +40,22 @@ export const orgApi = baseApi.injectEndpoints({
       },
       invalidatesTags: ['Org'],
     }),
+    removeOrgLogo: builder.mutation({
+      query: () => ({
+        url: '/org/logo',
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Org'],
+    }),
     getOrgSettings: builder.query({
       query: () => ({
         url: '/org/settings',
+      }),
+      providesTags: ['Org'],
+    }),
+    getSettingsHealth: builder.query({
+      query: () => ({
+        url: '/org/settings-health',
       }),
       providesTags: ['Org'],
     }),
@@ -63,7 +76,9 @@ export const {
   useGetOrgInfoQuery,
   useUpdateOrgProfileMutation,
   useUploadOrgLogoMutation,
+  useRemoveOrgLogoMutation,
   useGetOrgSettingsQuery,
+  useGetSettingsHealthQuery,
   useUpdateOrgSettingsMutation,
 } = orgApi;
 

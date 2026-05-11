@@ -2,11 +2,28 @@
  * @module ProfileSettings
  * @description Organization profile settings.
  */
-import { App as AntdApp, Form, Input, Button, Card, Upload, Image, Typography } from 'antd';
-import { LoadingOutlined, UploadOutlined } from '@ant-design/icons';
+import { App as AntdApp, Button, Card, Col, Form, Image, Input, Popconfirm, Row, Select, Space, Upload, Typography } from 'antd';
+import { DeleteOutlined, LoadingOutlined, ReloadOutlined, SaveOutlined, UploadOutlined } from '@ant-design/icons';
 import { useEffect } from 'react';
 
-export default function ProfileSettings({ org, onSubmit, onLogoUpload, loading, logoUploading }) {
+const TIMEZONE_OPTIONS = [
+  'Asia/Kolkata',
+  'Asia/Dubai',
+  'Asia/Singapore',
+  'Europe/London',
+  'America/New_York',
+].map((value) => ({ label: value, value }));
+
+export default function ProfileSettings({
+  org,
+  onSubmit,
+  onLogoUpload,
+  onLogoRemove,
+  loading,
+  logoUploading,
+  logoRemoving,
+  onDirtyChange,
+}) {
   const [form] = Form.useForm();
   const { message } = AntdApp.useApp();
   const currentLogo = Form.useWatch('logo', form) || org?.logo || '';
@@ -14,22 +31,26 @@ export default function ProfileSettings({ org, onSubmit, onLogoUpload, loading, 
   useEffect(() => {
     if (org) {
       form.setFieldsValue(org);
+      onDirtyChange?.(false);
     }
   }, [org, form]);
 
   const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      await onSubmit(values);
-    } catch (error) {
-      console.error('Validation failed:', error);
-    }
+    const values = await form.validateFields();
+    await onSubmit(values);
+    onDirtyChange?.(false);
+  };
+
+  const resetForm = () => {
+    form.setFieldsValue(org || {});
+    onDirtyChange?.(false);
   };
 
   const handleLogoUpload = async ({ file, onSuccess, onError }) => {
     try {
       const response = await onLogoUpload(file);
       form.setFieldsValue({ logo: response?.logo || '' });
+      onDirtyChange?.(true);
       onSuccess?.(response);
     } catch (error) {
       message.error(error?.data?.error?.message || error?.message || 'Failed to upload logo');
@@ -37,77 +58,111 @@ export default function ProfileSettings({ org, onSubmit, onLogoUpload, loading, 
     }
   };
 
+  const removeLogo = async () => {
+    const response = await onLogoRemove();
+    form.setFieldsValue({ logo: response?.logo || '' });
+    onDirtyChange?.(false);
+  };
+
   return (
-    <Card title="Organization Profile">
-      <Form form={form} layout="vertical" initialValues={org || {}}>
-        <Form.Item
-          name="name"
-          label="Organization Name"
-          rules={[{ required: true }]}
-        >
-          <Input />
-        </Form.Item>
+    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+      <Card title="Organisation Identity">
+        <Form form={form} layout="vertical" initialValues={org || {}} onValuesChange={() => onDirtyChange?.(true)}>
+          <Row gutter={[16, 0]}>
+            <Col xs={24} md={12}>
+              <Form.Item name="name" label="Organisation Name" rules={[{ required: true }]}>
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Slug">
+                <Input value={org?.slug || ''} disabled />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item label="Plan">
+                <Input value={org?.plan || ''} disabled />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={12}>
+              <Form.Item name="timezone" label="Timezone" rules={[{ required: true }]}>
+                <Select showSearch options={TIMEZONE_OPTIONS} />
+              </Form.Item>
+            </Col>
+          </Row>
 
-        <Form.Item
-          name="email"
-          label="Email"
-          rules={[{ required: true, type: 'email' }]}
-        >
-          <Input />
-        </Form.Item>
+          <Card type="inner" title="Contact Information" style={{ marginBottom: 16 }}>
+            <Row gutter={[16, 0]}>
+              <Col xs={24} md={12}>
+                <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="phone"
+                  label="Phone"
+                  rules={[{ pattern: /^[0-9+\-\s()]{7,20}$/, message: 'Enter a valid phone number' }]}
+                >
+                  <Input />
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item name="address" label="Address">
+                  <Input.TextArea rows={3} />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Card>
 
-        <Form.Item name="phone" label="Phone">
-          <Input />
-        </Form.Item>
-
-        <Form.Item name="address" label="Address">
-          <Input.TextArea rows={3} />
-        </Form.Item>
-
-        <Form.Item name="timezone" label="Timezone">
-          <Input />
-        </Form.Item>
-
-        <Form.Item name="logo" hidden>
-          <Input />
-        </Form.Item>
-
-        <Form.Item label="Logo">
-          <>
-            {currentLogo ? (
-              <div className="mb-4">
+          <Card type="inner" title="Branding">
+            <Form.Item name="logo" hidden>
+              <Input />
+            </Form.Item>
+            <Space align="start" size={16} wrap>
+              {currentLogo ? (
                 <Image
                   src={currentLogo}
-                  alt="Organization logo"
+                  alt="Organisation logo"
                   width={96}
                   height={96}
                   className="rounded-lg border border-gray-200 object-cover"
                   preview={false}
                   fallback=""
                 />
-                <Typography.Paragraph className="mb-0 mt-2 text-xs text-gray-500">
-                  This logo appears in the admin sidebar.
-                </Typography.Paragraph>
-              </div>
-            ) : null}
+              ) : null}
+              <Space direction="vertical">
+                <Typography.Text type="secondary">
+                  Upload a square image under 5 MB. PNG, JPG, and WebP are supported.
+                </Typography.Text>
+                <Space>
+                  <Upload accept="image/*" maxCount={1} showUploadList={false} customRequest={handleLogoUpload}>
+                    <Button icon={logoUploading ? <LoadingOutlined /> : <UploadOutlined />} loading={logoUploading}>
+                      {currentLogo ? 'Replace Logo' : 'Upload Logo'}
+                    </Button>
+                  </Upload>
+                  {currentLogo ? (
+                    <Popconfirm title="Remove organisation logo?" onConfirm={removeLogo}>
+                      <Button danger icon={<DeleteOutlined />} loading={logoRemoving}>
+                        Remove
+                      </Button>
+                    </Popconfirm>
+                  ) : null}
+                </Space>
+              </Space>
+            </Space>
+          </Card>
 
-            <Upload
-              accept="image/*"
-              maxCount={1}
-              showUploadList={false}
-              customRequest={handleLogoUpload}
-            >
-              <Button icon={logoUploading ? <LoadingOutlined /> : <UploadOutlined />} loading={logoUploading}>
-                {currentLogo ? 'Replace Logo' : 'Upload Logo'}
-              </Button>
-            </Upload>
-          </>
-        </Form.Item>
-
-        <Button type="primary" loading={loading} onClick={handleSubmit}>
-          Save Changes
-        </Button>
-      </Form>
-    </Card>
+          <div className="mt-4 flex gap-2">
+            <Button type="primary" icon={<SaveOutlined />} loading={loading} onClick={handleSubmit}>
+              Save Changes
+            </Button>
+            <Button icon={<ReloadOutlined />} onClick={resetForm}>
+              Reset
+            </Button>
+          </div>
+        </Form>
+      </Card>
+    </Space>
   );
 }

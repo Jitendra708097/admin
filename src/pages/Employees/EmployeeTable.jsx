@@ -1,5 +1,5 @@
 import { Avatar, Button, Dropdown, Space, Table, Tooltip, Typography } from 'antd';
-import { CheckCircleOutlined, DeleteOutlined, EditOutlined, MailOutlined, MoreOutlined, StopOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, EditOutlined, EyeOutlined, MailOutlined, MoreOutlined, StopOutlined } from '@ant-design/icons';
 import Skeleton from '../../components/common/Skeleton.jsx';
 import RoleBadge from '../../components/common/RoleBadge.jsx';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
@@ -8,6 +8,7 @@ export default function EmployeeTable({
   data,
   loading,
   onEdit,
+  onView,
   onDelete,
   onToggleStatus,
   onResendInvite,
@@ -79,6 +80,23 @@ export default function EmployeeTable({
       render: (status) => <StatusBadge status={status} />,
     },
     {
+      title: 'Face',
+      dataIndex: 'faceEnrolled',
+      key: 'faceEnrolled',
+      width: 130,
+      render: (faceEnrolled) => (
+        faceEnrolled ? (
+          <span style={{ color: '#0f766e', fontWeight: 600 }}>
+            <CheckCircleOutlined /> Enrolled
+          </span>
+        ) : (
+          <span style={{ color: '#d97706', fontWeight: 600 }}>
+            <CloseCircleOutlined /> Pending
+          </span>
+        )
+      ),
+    },
+    {
       title: 'Actions',
       key: 'actions',
       align: 'right',
@@ -86,6 +104,12 @@ export default function EmployeeTable({
         <Dropdown
           menu={{
             items: [
+              {
+                key: 'view',
+                icon: <EyeOutlined />,
+                label: 'View Details',
+                onClick: () => onView?.(record),
+              },
               {
                 key: 'edit',
                 icon: <EditOutlined />,

@@ -19,6 +19,12 @@ export const shiftApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Shifts'],
     }),
+    getShiftEmployees: builder.query({
+      query: (id) => ({
+        url: `/shifts/${id}/employees`,
+      }),
+      providesTags: ['Shifts', 'Employees'],
+    }),
     createShift: builder.mutation({
       query: (body) => ({
         url: '/shifts',
@@ -49,6 +55,7 @@ export const shiftApi = baseApi.injectEndpoints({
 export const {
   useGetShiftsQuery,
   useGetShiftDetailQuery,
+  useGetShiftEmployeesQuery,
   useCreateShiftMutation,
   useUpdateShiftMutation,
   useDeleteShiftMutation,

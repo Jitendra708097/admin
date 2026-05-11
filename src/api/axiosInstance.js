@@ -46,7 +46,22 @@ axiosInstance.interceptors.response.use(
 
       try {
         const storeInstance = await getStore();
-        const refreshToken = storeInstance.getState().auth.refreshToken;
+        const authState = storeInstance.getState().auth;
+        const refreshToken = authState.refreshToken;
+        const errorMessage = error.response?.data?.error?.message || error.response?.data?.message || '';
+
+        if (
+          original.url?.includes('/auth/impersonation/exchange') ||
+          authState.user?.isImpersonated ||
+          !refreshToken ||
+          errorMessage.includes('Impersonation session')
+        ) {
+          const { logout } = await import('../store/authSlice.js');
+          storeInstance.dispatch(logout());
+          message.error(errorMessage || 'Impersonation session ended. Please log in again.');
+          window.location.href = '/login';
+          return Promise.reject(error);
+        }
 
         const response = await axios.post(
           `${API_BASE_URL}/auth/refresh`,

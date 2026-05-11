@@ -1,59 +1,129 @@
-import { Card, Button, Space, Badge, Statistic, Row, Col, Typography } from 'antd';
-import { EditOutlined, DeleteOutlined, EnvironmentOutlined } from '@ant-design/icons';
+import { Badge, Button, Card, Col, Popconfirm, Row, Space, Statistic, Tag, Tooltip, Typography } from 'antd';
+import {
+  BarChartOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  EnvironmentOutlined,
+  TeamOutlined,
+} from '@ant-design/icons';
 
-export default function BranchCard({ branch, onEdit, onSetGeofence, onDelete }) {
+function getGeofenceBadge(branch) {
+  if (branch.isRemote) {
+    return { color: 'blue', text: 'Remote branch' };
+  }
+
+  if (branch.geofenceQuality === 'valid' || branch.hasGeofence) {
+    return { color: 'success', text: 'Geofence ready' };
+  }
+
+  if (branch.geofenceQuality === 'too_few_points') {
+    return { color: 'warning', text: 'Geofence incomplete' };
+  }
+
+  return { color: 'error', text: 'Geofence missing' };
+}
+
+export default function BranchCard({
+  branch,
+  onEdit,
+  onSetGeofence,
+  onDelete,
+  onViewEmployees,
+  onViewStats,
+}) {
+  const geofenceBadge = getGeofenceBadge(branch);
+  const employeeCount = branch.employeeCount || 0;
+  const canDelete = branch.canDelete !== false && employeeCount === 0;
+
   return (
     <Card
-      title={branch.name}
+      title={
+        <Space direction="vertical" size={2}>
+          <Typography.Text strong>{branch.name}</Typography.Text>
+          <Space size={6} wrap>
+            <Tag color={branch.isRemote ? 'blue' : 'green'}>{branch.isRemote ? 'Remote' : 'Office'}</Tag>
+            <Tag color={geofenceBadge.color}>{geofenceBadge.text}</Tag>
+          </Space>
+        </Space>
+      }
       extra={
         <Space>
-          <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(branch)} />
-          <Button type="text" icon={<EnvironmentOutlined />} onClick={() => onSetGeofence(branch)} />
-          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => onDelete(branch.id)} />
+          <Tooltip title="Edit branch">
+            <Button type="text" icon={<EditOutlined />} onClick={() => onEdit(branch)} />
+          </Tooltip>
+          <Tooltip title="Set geofence">
+            <Button type="text" icon={<EnvironmentOutlined />} onClick={() => onSetGeofence(branch)} />
+          </Tooltip>
+          <Popconfirm
+            title="Delete branch?"
+            description={
+              canDelete
+                ? 'This branch will be removed.'
+                : 'Reassign employees before deleting this branch.'
+            }
+            okButtonProps={{ danger: true, disabled: !canDelete }}
+            okText="Delete"
+            onConfirm={() => {
+              if (canDelete) {
+                onDelete(branch.id);
+              }
+            }}
+          >
+            <Tooltip title={canDelete ? 'Delete branch' : 'Branch has assigned employees'}>
+              <Button type="text" danger icon={<DeleteOutlined />} disabled={!canDelete} />
+            </Tooltip>
+          </Popconfirm>
         </Space>
       }
       style={{ height: '100%' }}
     >
-      <p>
-        <EnvironmentOutlined /> {branch.address || 'No address provided'}
-      </p>
+      <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }} style={{ margin: 0 }}>
+          <EnvironmentOutlined /> {branch.address || 'No address provided'}
+        </Typography.Paragraph>
 
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col xs={12}>
-          <Statistic title="Employees" value={branch.employeeCount || 0} />
-        </Col>
-        <Col xs={12}>
-          {branch.hasGeofence ? (
-            <Badge status="success" text="Geofence Set" />
-          ) : (
-            <Badge status="error" text="No Geofence" />
-          )}
-        </Col>
-      </Row>
+        <Row gutter={[12, 12]}>
+          <Col span={12}>
+            <Statistic title="Employees" value={employeeCount} prefix={<TeamOutlined />} />
+          </Col>
+          <Col span={12}>
+            <Statistic title="Polygon points" value={branch.polygonPointCount || 0} />
+          </Col>
+        </Row>
 
-      <div
-        style={{
-          marginTop: 18,
-          padding: 14,
-          borderRadius: 14,
-          background: branch.hasGeofence ? 'linear-gradient(135deg, #ecfdf3 0%, #dcfce7 100%)' : 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
-          border: `1px solid ${branch.hasGeofence ? '#86efac' : '#fdba74'}`,
-        }}
-      >
-        <Typography.Text strong style={{ display: 'block', marginBottom: 6, color: '#111827' }}>
-          {branch.hasGeofence ? 'Geofence is ready' : 'Set branch geofence'}
-        </Typography.Text>
-        <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
-          {branch.hasGeofence
-            ? 'Update the polygon anytime to refine the branch attendance zone.'
-            : 'Draw the branch boundary on the map so attendance only works inside the allowed area.'}
-        </Typography.Text>
-        <Button type="primary" icon={<EnvironmentOutlined />} onClick={() => onSetGeofence(branch)}>
-          {branch.hasGeofence ? 'Edit Geofence' : 'Set Geofence'}
-        </Button>
-      </div>
+        <div
+          style={{
+            padding: 12,
+            borderRadius: 8,
+            border: `1px solid ${branch.hasGeofence || branch.isRemote ? '#bbf7d0' : '#fed7aa'}`,
+            background: branch.hasGeofence || branch.isRemote ? '#f0fdf4' : '#fff7ed',
+          }}
+        >
+          <Badge
+            status={geofenceBadge.color === 'error' ? 'error' : branch.hasGeofence || branch.isRemote ? 'success' : 'warning'}
+            text={geofenceBadge.text}
+          />
+          <Typography.Text type="secondary" style={{ display: 'block', marginTop: 6 }}>
+            {branch.isRemote
+              ? 'Remote branch does not require a fixed office polygon.'
+              : branch.hasGeofence
+                ? 'Attendance can validate GPS inside this branch boundary.'
+                : 'Draw the branch boundary before using location-restricted attendance.'}
+          </Typography.Text>
+        </div>
 
-      {branch.isRemote ? <Badge color="blue" text="Remote Office" style={{ marginTop: 8 }} /> : null}
+        <Space wrap>
+          <Button icon={<EnvironmentOutlined />} onClick={() => onSetGeofence(branch)}>
+            {branch.hasGeofence ? 'Edit Geofence' : 'Set Geofence'}
+          </Button>
+          <Button icon={<TeamOutlined />} onClick={() => onViewEmployees(branch)}>
+            Employees
+          </Button>
+          <Button icon={<BarChartOutlined />} onClick={() => onViewStats(branch)}>
+            Today
+          </Button>
+        </Space>
+      </Space>
     </Card>
   );
 }

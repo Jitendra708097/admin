@@ -21,6 +21,8 @@ import DepartmentsPage from '../pages/Departments/index.jsx';
 import NotificationsPage from '../pages/Notifications/index.jsx';
 import DeviceExceptionsPage from '../pages/DeviceExceptions/index.jsx';
 import BillingPage from '../pages/Billing/index.jsx';
+import HolidaysPage from '../pages/Holidays/index.jsx';
+import ReportsPage from '../pages/Reports/index.jsx';
 import SettingsPage from '../pages/Settings/index.jsx';
 import NotFoundPage from '../pages/NotFound/index.jsx';
 
@@ -45,8 +47,8 @@ export default function AppRouter() {
           <Route path="/shifts" element={<ShiftsPage />} />
           <Route path="/branches" element={<BranchesPage />} />
           <Route path="/departments" element={<DepartmentsPage />} />
-          <Route path="/holidays" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/reports" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/holidays" element={<HolidaysPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/device-exceptions" element={<DeviceExceptionsPage />} />
           <Route path="/billing" element={<BillingPage />} />

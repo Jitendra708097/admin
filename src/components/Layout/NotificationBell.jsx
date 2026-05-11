@@ -20,7 +20,7 @@ export default function NotificationBell() {
     }
 
     setBellOpen(false);
-    navigate(resolveNotificationTarget(item?.actionUrl));
+    navigate(resolveNotificationTarget(item));
   };
 
   const markNotificationRead = async (event, itemId) => {

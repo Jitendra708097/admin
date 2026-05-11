@@ -1,14 +1,21 @@
-﻿/**
+/**
  * @module PlanCard
  * @description Subscription plan display card.
  */
-import { Card, Button, List } from 'antd';
-import { CheckOutlined } from '@ant-design/icons';
+import { Alert, Button, Card, Col, Descriptions, Row, Space, Statistic, Tag, Typography } from 'antd';
+import { CheckOutlined, CreditCardOutlined, TeamOutlined } from '@ant-design/icons';
 import Skeleton from '../../components/common/Skeleton.jsx';
 import { formatCurrency, formatDate } from '../../utils/formatters.js';
 
-export default function PlanCard({ plan, onUpgrade, loading }) {
+function getStatusColor(status) {
+  if (status === 'paid') return 'success';
+  if (status === 'overdue') return 'error';
+  return 'warning';
+}
+
+export default function PlanCard({ plan, currentInvoice, onUpgrade, loading }) {
   const features = plan?.features || [];
+  const invoiceStatus = currentInvoice?.isOverdue ? 'overdue' : currentInvoice?.status || 'due';
 
   if (loading) {
     return (
@@ -19,36 +26,73 @@ export default function PlanCard({ plan, onUpgrade, loading }) {
   }
 
   return (
-    <Card title="Current Plan">
-      <div className="mb-4">
-        <h3 className="text-xl font-semibold">{plan?.name || 'Plan'}</h3>
-        <p className="text-2xl font-bold text-blue-600">
-          {formatCurrency(plan?.price || 0, plan?.currency || 'INR')}/{plan?.billingUnit || 'month'}
-        </p>
-        <p className="mt-2 text-sm text-gray-600">
-          Active employees: {plan?.employeeCount || 0}
-        </p>
-        <p className="text-sm text-gray-600">
-          Current bill: {formatCurrency(plan?.monthlyAmount || 0, plan?.currency || 'INR')}
-        </p>
-        {plan?.trialEndsAt && (
-          <p className="text-sm text-orange-600">Trial ends on {formatDate(plan.trialEndsAt)}</p>
-        )}
-      </div>
+    <Card
+      title="Current Plan"
+      extra={
+        <Button type="primary" onClick={onUpgrade}>
+          Request Plan Change
+        </Button>
+      }
+    >
+      <Space direction="vertical" size={18} style={{ width: '100%' }}>
+        {currentInvoice?.isOverdue ? (
+          <Alert
+            type="warning"
+            showIcon
+            message="Invoice overdue"
+            description="The current invoice is past its due date. Please complete payment to avoid billing follow-up."
+          />
+        ) : null}
 
-      <List
-        dataSource={features}
-        renderItem={(feature) => (
-          <List.Item>
-            <CheckOutlined className="mr-2 text-green-600" />
-            {feature}
-          </List.Item>
-        )}
-      />
+        <Row gutter={[16, 16]}>
+          <Col xs={24} md={8}>
+            <Statistic title="Plan" value={plan?.name || 'Plan'} prefix={<CheckOutlined />} />
+          </Col>
+          <Col xs={24} md={8}>
+            <Statistic title="Active employees" value={plan?.employeeCount || 0} prefix={<TeamOutlined />} />
+          </Col>
+          <Col xs={24} md={8}>
+            <Statistic
+              title="Current bill"
+              value={plan?.monthlyAmount || 0}
+              formatter={(value) => formatCurrency(value, plan?.currency || 'INR')}
+              prefix={<CreditCardOutlined />}
+            />
+          </Col>
+        </Row>
 
-      <Button type="primary" className="mt-4" onClick={onUpgrade}>
-        Contact Billing
-      </Button>
+        <Descriptions size="small" column={{ xs: 1, md: 2 }} bordered>
+          <Descriptions.Item label="Rate">
+            {formatCurrency(plan?.price || 0, plan?.currency || 'INR')} / {plan?.billingUnit || 'employee/month'}
+          </Descriptions.Item>
+          <Descriptions.Item label="Invoice status">
+            <Tag color={getStatusColor(invoiceStatus)}>{String(invoiceStatus).toUpperCase()}</Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="Current invoice">
+            {currentInvoice?.invoiceNumber || '-'}
+          </Descriptions.Item>
+          <Descriptions.Item label="Due date">
+            {currentInvoice?.dueDate ? formatDate(currentInvoice.dueDate) : '-'}
+          </Descriptions.Item>
+          {plan?.trialEndsAt ? (
+            <Descriptions.Item label="Trial ends">{formatDate(plan.trialEndsAt)}</Descriptions.Item>
+          ) : null}
+          <Descriptions.Item label="Billing model">{plan?.billingUnit || 'employee/month'}</Descriptions.Item>
+        </Descriptions>
+
+        {features.length > 0 ? (
+          <div>
+            <Typography.Text strong>Included</Typography.Text>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {features.map((feature) => (
+                <Tag key={feature} color="green">
+                  <CheckOutlined /> {feature}
+                </Tag>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </Space>
     </Card>
   );
 }

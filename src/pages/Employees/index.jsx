@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { App, Button, Card, Col, Input, Popconfirm, Row, Select, Space, Statistic, Typography } from 'antd';
 import { PlusOutlined, ReloadOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons';
+import { useNavigate, useSearchParams } from 'react-router';
 import PageHeader from '../../components/common/PageHeader.jsx';
 import EmployeeTable from './EmployeeTable.jsx';
 import EmployeeForm from './EmployeeForm.jsx';
@@ -24,6 +25,8 @@ import styles from './employees.module.css';
 
 export default function EmployeesPage() {
   const { message } = App.useApp();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -31,9 +34,10 @@ export default function EmployeesPage() {
   const [bulkUploadResults, setBulkUploadResults] = useState(null);
   const [showLeaveBalance, setShowLeaveBalance] = useState(false);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [branch, setBranch] = useState();
-  const [department, setDepartment] = useState();
+  const [branch, setBranch] = useState(searchParams.get('branch') || undefined);
+  const [department, setDepartment] = useState(searchParams.get('dept') || undefined);
   const [status, setStatus] = useState();
+  const [face, setFace] = useState(searchParams.get('face') || undefined);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
   const debouncedSearch = useDebounce(search);
@@ -42,6 +46,7 @@ export default function EmployeesPage() {
     branch,
     dept: department,
     status,
+    face,
     page: pagination.current,
     limit: pagination.pageSize,
   });
@@ -70,6 +75,7 @@ export default function EmployeesPage() {
     setBranch(undefined);
     setDepartment(undefined);
     setStatus(undefined);
+    setFace(undefined);
     setPagination((current) => ({ ...current, current: 1 }));
   };
 
@@ -148,7 +154,7 @@ export default function EmployeesPage() {
               Search and narrow the list
             </Typography.Title>
             <Typography.Paragraph type="secondary" style={{ margin: '6px 0 0 0' }}>
-              Filter by branch, department, status, or search across name, email, and employee code.
+              Filter by branch, department, status, face enrollment, or search across name, email, and employee code.
             </Typography.Paragraph>
           </div>
           <Space wrap>
@@ -160,7 +166,7 @@ export default function EmployeesPage() {
         </div>
 
         <Row gutter={[16, 16]}>
-          <Col xs={24} lg={10}>
+          <Col xs={24} lg={8}>
             <Input
               size="large"
               placeholder="Search by name, email, or employee code"
@@ -172,7 +178,7 @@ export default function EmployeesPage() {
               }}
             />
           </Col>
-          <Col xs={24} md={8} lg={5}>
+          <Col xs={24} md={8} lg={4}>
             <Select
               size="large"
               placeholder="Branch"
@@ -188,7 +194,7 @@ export default function EmployeesPage() {
               options={branches?.branches?.map((item) => ({ label: item.name, value: item.id })) || []}
             />
           </Col>
-          <Col xs={24} md={8} lg={5}>
+          <Col xs={24} md={8} lg={4}>
             <Select
               size="large"
               placeholder="Department"
@@ -218,6 +224,23 @@ export default function EmployeesPage() {
               options={[
                 { label: 'Active', value: 'active' },
                 { label: 'Inactive', value: 'inactive' },
+              ]}
+            />
+          </Col>
+          <Col xs={24} md={8} lg={4}>
+            <Select
+              size="large"
+              placeholder="Face"
+              style={{ width: '100%' }}
+              allowClear
+              value={face}
+              onChange={(value) => {
+                setFace(value);
+                setPagination((current) => ({ ...current, current: 1 }));
+              }}
+              options={[
+                { label: 'Face enrolled', value: 'enrolled' },
+                { label: 'Face missing', value: 'missing' },
               ]}
             />
           </Col>
@@ -252,6 +275,7 @@ export default function EmployeesPage() {
         <EmployeeTable
           data={employees}
           loading={isLoading}
+          onView={(employee) => navigate(`/employees/${employee.id}`)}
           onEdit={(employee) => {
             setSelectedEmployee(employee);
             setShowForm(true);

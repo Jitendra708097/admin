@@ -19,6 +19,18 @@ export const branchApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Branches'],
     }),
+    getBranchEmployees: builder.query({
+      query: (id) => ({
+        url: `/branches/${id}/employees`,
+      }),
+      providesTags: ['Branches'],
+    }),
+    getBranchTodayStats: builder.query({
+      query: (id) => ({
+        url: `/branches/${id}/stats/today`,
+      }),
+      providesTags: ['Branches'],
+    }),
     createBranch: builder.mutation({
       query: (body) => ({
         url: '/branches',
@@ -50,6 +62,13 @@ export const branchApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Branches'],
     }),
+    testGeofence: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/branches/${id}/geofence/test`,
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -57,8 +76,11 @@ export const branchApi = baseApi.injectEndpoints({
 export const {
   useGetBranchesQuery,
   useGetBranchDetailQuery,
+  useGetBranchEmployeesQuery,
+  useGetBranchTodayStatsQuery,
   useCreateBranchMutation,
   useUpdateBranchMutation,
   useDeleteBranchMutation,
   useSetGeofenceMutation,
+  useTestGeofenceMutation,
 } = branchApi;

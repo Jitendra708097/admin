@@ -3,7 +3,7 @@ import { App as AntdApp, Form, Input, Button, Card, Row, Col, Checkbox } from 'a
 import { LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate, Link } from 'react-router';
 import { useDispatch } from 'react-redux';
-import { useLoginMutation } from '../../store/api/authApi.js';
+import { useExchangeImpersonationCodeMutation, useLoginMutation } from '../../store/api/authApi.js';
 import { setAuth } from '../../store/authSlice.js';
 import { parseApiError } from '../../utils/errorHandler.js';
 import styles from './auth.module.css';
@@ -15,39 +15,46 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const [loginError, setLoginError] = useState('');
   const [login, { isLoading }] = useLoginMutation();
+  const [exchangeImpersonationCode] = useExchangeImpersonationCodeMutation();
 
   useEffect(() => {
     const hash = window.location.hash || '';
 
-    if (!hash.startsWith('#impersonation=')) {
+    if (!hash.startsWith('#impersonationCode=')) {
       return;
     }
 
-    try {
-      const encodedPayload = decodeURIComponent(hash.slice('#impersonation='.length));
-      const decodedPayload = JSON.parse(decodeURIComponent(escape(window.atob(encodedPayload))));
+    const code = decodeURIComponent(hash.slice('#impersonationCode='.length));
 
-      if (!decodedPayload?.accessToken || !decodedPayload?.user) {
-        throw new Error('Invalid impersonation handoff');
+    const startSupportSession = async () => {
+      try {
+        const decodedPayload = await exchangeImpersonationCode({ code }).unwrap();
+
+        if (!decodedPayload?.accessToken || !decodedPayload?.user) {
+          throw new Error('Invalid impersonation handoff');
+        }
+
+        dispatch(
+          setAuth({
+            user: decodedPayload.user,
+            accessToken: decodedPayload.accessToken,
+            refreshToken: null,
+            org: decodedPayload.org || { id: decodedPayload.user.orgId, name: decodedPayload.user.orgName },
+          })
+        );
+
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        message.success('Support session active');
+        navigate('/dashboard', { replace: true });
+      } catch (error) {
+        const parsedError = parseApiError(error);
+        message.error(parsedError || 'Unable to start support session');
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
       }
+    };
 
-      dispatch(
-        setAuth({
-          user: decodedPayload.user,
-          accessToken: decodedPayload.accessToken,
-          refreshToken: null,
-          org: decodedPayload.org || { id: decodedPayload.user.orgId, name: decodedPayload.user.orgName },
-        })
-      );
-
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-      message.success('Support session active');
-      navigate('/dashboard', { replace: true });
-    } catch (error) {
-      message.error('Unable to start support session');
-      window.history.replaceState(null, '', window.location.pathname + window.location.search);
-    }
-  }, [dispatch, message, navigate]);
+    startSupportSession();
+  }, [dispatch, exchangeImpersonationCode, message, navigate]);
 
   const onFinish = async (values) => {
     setLoginError('');

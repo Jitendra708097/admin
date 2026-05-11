@@ -19,6 +19,18 @@ export const departmentApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Departments'],
     }),
+    getDepartmentEmployees: builder.query({
+      query: (id) => ({
+        url: `/departments/${id}/employees`,
+      }),
+      providesTags: ['Departments'],
+    }),
+    getDepartmentStats: builder.query({
+      query: (id) => ({
+        url: `/departments/${id}/stats`,
+      }),
+      providesTags: ['Departments'],
+    }),
     createDepartment: builder.mutation({
       query: (body) => ({
         url: '/departments',
@@ -49,6 +61,8 @@ export const departmentApi = baseApi.injectEndpoints({
 export const {
   useGetDepartmentsQuery,
   useGetDepartmentDetailQuery,
+  useGetDepartmentEmployeesQuery,
+  useGetDepartmentStatsQuery,
   useCreateDepartmentMutation,
   useUpdateDepartmentMutation,
   useDeleteDepartmentMutation,

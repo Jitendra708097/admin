@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Button, Drawer, Space, message, Input, Card, Typography, Tag, Segmented } from 'antd';
+import { Alert, Button, Drawer, Space, message, Input, InputNumber, Card, Popconfirm, Typography, Tag, Segmented } from 'antd';
 import {
   AimOutlined,
   EnvironmentOutlined,
@@ -12,7 +12,7 @@ import {
   CompressOutlined,
 } from '@ant-design/icons';
 import { GoogleMap, Polygon, Marker, InfoWindow, Circle, useJsApiLoader } from '@react-google-maps/api';
-import { useSetGeofenceMutation } from '../../store/api/branchApi.js';
+import { useSetGeofenceMutation, useTestGeofenceMutation } from '../../store/api/branchApi.js';
 
 const libraries = ['places'];
 const defaultCenter = { lat: 28.6139, lng: 77.209 };
@@ -54,7 +54,10 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
   const [searchAddress, setSearchAddress] = useState('');
   const [mapType, setMapType] = useState('roadmap');
   const [isDrawing, setIsDrawing] = useState(false);
+  const [testPoint, setTestPoint] = useState({ lat: null, lng: null });
+  const [testResult, setTestResult] = useState(null);
   const [setGeofence, { isLoading }] = useSetGeofenceMutation();
+  const [testGeofence, { isLoading: isTesting }] = useTestGeofenceMutation();
   const polygonRef = useRef(null);
   const mapRef = useRef(null);
   const geocoderRef = useRef(null);
@@ -73,6 +76,8 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
     setPolygonPath(nextPolygon);
     setSearchAddress(branch?.address || '');
     setIsDrawing(nextPolygon.length === 0);
+    setTestPoint({ lat: null, lng: null });
+    setTestResult(null);
   }, [branch, open]);
 
   useEffect(() => {
@@ -239,6 +244,7 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
 
     setPolygonPath([]);
     setIsDrawing(true);
+    setTestResult(null);
   };
 
   const undoLastPoint = () => {
@@ -279,15 +285,48 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
     setPolygonPath((current) => [...current, nextPoint]);
   };
 
+  const useCenterAsTestPoint = () => {
+    setTestPoint({
+      lat: Number(previewCenter.lat.toFixed(6)),
+      lng: Number(previewCenter.lng.toFixed(6)),
+    });
+    setTestResult(null);
+  };
+
+  const handleCoordinateTest = async () => {
+    if (!branch?.id) {
+      return;
+    }
+
+    if (!Number.isFinite(Number(testPoint.lat)) || !Number.isFinite(Number(testPoint.lng))) {
+      message.warning('Enter valid latitude and longitude.');
+      return;
+    }
+
+    try {
+      const result = await testGeofence({
+        id: branch.id,
+        lat: Number(testPoint.lat),
+        lng: Number(testPoint.lng),
+      }).unwrap();
+      setTestResult(result);
+      message[result.inside ? 'success' : 'warning'](
+        result.inside ? 'Coordinate is inside this branch.' : 'Coordinate is outside this branch.'
+      );
+    } catch (error) {
+      message.error(error?.data?.error?.message || 'Failed to test coordinate');
+    }
+  };
+
   const handleSave = async () => {
-    if (polygonPath.length < 3) {
+    if (polygonPath.length > 0 && polygonPath.length < 3) {
       message.warning('Draw a polygon with at least 3 points.');
       return;
     }
 
     try {
       await setGeofence({ id: branch.id, polygon: polygonPath }).unwrap();
-      message.success('Geofence saved');
+      message.success(polygonPath.length === 0 ? 'Geofence cleared' : 'Geofence saved');
       onClose();
     } catch (error) {
       message.error(error?.data?.error?.message || 'Failed to save geofence');
@@ -302,9 +341,9 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
       width={980}
       extra={
         <Space>
-          <Button icon={<DeleteOutlined />} onClick={clearPolygon}>
-            Clear
-          </Button>
+          <Popconfirm title="Clear geofence points?" onConfirm={clearPolygon} okText="Clear">
+            <Button icon={<DeleteOutlined />}>Clear</Button>
+          </Popconfirm>
           <Button icon={<UndoOutlined />} onClick={undoLastPoint} disabled={polygonPath.length === 0}>
             Undo Point
           </Button>
@@ -398,6 +437,52 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
               <Typography.Text type="secondary">
                 Click `Draw Boundary`, then click around the branch on the map to place points. Click the `Start` marker again or press `Close Boundary` to finish. After that, drag polygon points to refine it. The saved zone appears in green.
               </Typography.Text>
+            </Space>
+          </Card>
+
+          <Card style={{ marginBottom: 16, borderRadius: 12 }}>
+            <Space direction="vertical" size={12} style={{ width: '100%' }}>
+              <Typography.Title level={5} style={{ margin: 0 }}>
+                Test a coordinate
+              </Typography.Title>
+              <Space wrap>
+                <InputNumber
+                  value={testPoint.lat}
+                  onChange={(value) => {
+                    setTestPoint((current) => ({ ...current, lat: value }));
+                    setTestResult(null);
+                  }}
+                  placeholder="Latitude"
+                  precision={6}
+                  style={{ width: 180 }}
+                />
+                <InputNumber
+                  value={testPoint.lng}
+                  onChange={(value) => {
+                    setTestPoint((current) => ({ ...current, lng: value }));
+                    setTestResult(null);
+                  }}
+                  placeholder="Longitude"
+                  precision={6}
+                  style={{ width: 180 }}
+                />
+                <Button onClick={useCenterAsTestPoint}>Use Map Center</Button>
+                <Button type="primary" loading={isTesting} onClick={handleCoordinateTest}>
+                  Test
+                </Button>
+              </Space>
+              {testResult ? (
+                <Alert
+                  type={testResult.inside ? 'success' : 'warning'}
+                  showIcon
+                  message={testResult.inside ? 'Inside branch geofence' : 'Outside branch geofence'}
+                  description={
+                    testResult.distanceMeters == null
+                      ? 'This branch does not have a valid polygon yet.'
+                      : `Distance from boundary: ${testResult.distanceMeters} m`
+                  }
+                />
+              ) : null}
             </Space>
           </Card>
 
