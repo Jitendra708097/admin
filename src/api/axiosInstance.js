@@ -23,6 +23,7 @@ const getStore = async () => {
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
+  withCredentials: true,
 });
 
 // Request interceptor — attach access token
@@ -47,13 +48,11 @@ axiosInstance.interceptors.response.use(
       try {
         const storeInstance = await getStore();
         const authState = storeInstance.getState().auth;
-        const refreshToken = authState.refreshToken;
         const errorMessage = error.response?.data?.error?.message || error.response?.data?.message || '';
 
         if (
           original.url?.includes('/auth/impersonation/exchange') ||
           authState.user?.isImpersonated ||
-          !refreshToken ||
           errorMessage.includes('Impersonation session')
         ) {
           const { logout } = await import('../store/authSlice.js');
@@ -65,7 +64,8 @@ axiosInstance.interceptors.response.use(
 
         const response = await axios.post(
           `${API_BASE_URL}/auth/refresh`,
-          { refreshToken }
+          {},
+          { withCredentials: true }
         );
 
         const { setTokens } = await import('../store/authSlice.js');

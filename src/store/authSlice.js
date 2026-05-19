@@ -10,10 +10,10 @@ const authSlice = createSlice({
   name: 'auth',
   initialState: {
     user: storage.get('user'),
-    accessToken: storage.get('accessToken'),
-    refreshToken: storage.get('refreshToken'),
+    accessToken: null,
+    refreshToken: null,
     orgInfo: storage.get('orgInfo'),
-    isAuthenticated: !!storage.get('accessToken'),
+    isAuthenticated: !!storage.get('user'),
   },
   reducers: {
     setAuth: (state, action) => {
@@ -24,15 +24,13 @@ const authSlice = createSlice({
       state.orgInfo = org;
       state.isAuthenticated = true;
       storage.set('user', user);
-      storage.set('accessToken', accessToken);
-      storage.set('refreshToken', refreshToken);
       storage.set('orgInfo', org);
+      storage.remove('accessToken');
+      storage.remove('refreshToken');
     },
     setTokens: (state, action) => {
       state.accessToken = action.payload.accessToken;
       state.refreshToken = action.payload.refreshToken;
-      storage.set('accessToken', action.payload.accessToken);
-      storage.set('refreshToken', action.payload.refreshToken);
     },
     setOrgInfo: (state, action) => {
       state.orgInfo = action.payload;

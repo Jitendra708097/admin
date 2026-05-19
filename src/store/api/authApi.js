@@ -44,6 +44,7 @@ export const authApi = baseApi.injectEndpoints({
       query: () => ({
         url: '/auth/logout',
         method: 'POST',
+        body: {},
       }),
       invalidatesTags: ['Org', 'Employees', 'Attendance', 'Leaves', 'Regularisations'],
     }),

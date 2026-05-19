@@ -11,16 +11,19 @@ import {
   UndoOutlined,
   CompressOutlined,
 } from '@ant-design/icons';
-import { GoogleMap, Polygon, Marker, InfoWindow, Circle, useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, Polygon, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { useSetGeofenceMutation, useTestGeofenceMutation } from '../../store/api/branchApi.js';
 
-const libraries = ['places'];
+const libraries = ['places', 'marker'];
 const defaultCenter = { lat: 28.6139, lng: 77.209 };
 const mapContainerStyle = { width: '100%', height: '62vh', borderRadius: 20 };
+const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
+const googleMapsMapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID';
 const mapOptions = {
   streetViewControl: false,
   mapTypeControl: false,
   fullscreenControl: false,
+  mapId: googleMapsMapId,
 };
 const polygonStyle = {
   fillColor: '#16a34a',
@@ -48,6 +51,73 @@ function arePointsClose(pointA, pointB) {
   return distanceInMeters(pointA, pointB) <= 35;
 }
 
+function AdvancedMapMarker({ map, position, label, onClick }) {
+  const markerRef = useRef(null);
+  const contentRef = useRef(null);
+  const onClickRef = useRef(onClick);
+
+  useEffect(() => {
+    onClickRef.current = onClick;
+  }, [onClick]);
+
+  useEffect(() => {
+    if (!map || !window.google?.maps?.marker?.AdvancedMarkerElement) {
+      return undefined;
+    }
+
+    const content = document.createElement('button');
+    content.type = 'button';
+    content.textContent = label || '';
+    content.style.cssText = [
+      'min-width: 34px',
+      'height: 34px',
+      'padding: 0 8px',
+      'border: 2px solid #ffffff',
+      'border-radius: 999px',
+      'background: #15803d',
+      'color: #ffffff',
+      'font: 700 11px/1 system-ui, sans-serif',
+      'box-shadow: 0 8px 18px rgba(21, 128, 61, 0.35)',
+      'cursor: pointer',
+      'white-space: nowrap',
+    ].join(';');
+
+    const marker = new window.google.maps.marker.AdvancedMarkerElement({
+      map,
+      position,
+      content,
+    });
+
+    const listener = marker.addListener('click', () => {
+      onClickRef.current?.();
+    });
+
+    markerRef.current = marker;
+    contentRef.current = content;
+
+    return () => {
+      listener.remove();
+      marker.map = null;
+      markerRef.current = null;
+      contentRef.current = null;
+    };
+  }, [map]);
+
+  useEffect(() => {
+    if (markerRef.current) {
+      markerRef.current.position = position;
+    }
+  }, [position]);
+
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.textContent = label || '';
+    }
+  }, [label]);
+
+  return null;
+}
+
 export default function GeoFenceDrawer({ open, branch, onClose }) {
   const [polygonPath, setPolygonPath] = useState([]);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
@@ -60,10 +130,11 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
   const [testGeofence, { isLoading: isTesting }] = useTestGeofenceMutation();
   const polygonRef = useRef(null);
   const mapRef = useRef(null);
+  const [map, setMap] = useState(null);
   const geocoderRef = useRef(null);
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_KEY,
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: googleMapsApiKey || '',
     libraries,
   });
 
@@ -129,16 +200,6 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
       lng: totals.lng / polygonPath.length,
     };
   }, [center, polygonPath]);
-
-  const previewRadiusMeters = useMemo(() => {
-    if (polygonPath.length < 2) {
-      return 0;
-    }
-
-    return Math.round(
-      polygonPath.reduce((largest, point) => Math.max(largest, distanceInMeters(previewCenter, point)), 0)
-    );
-  }, [polygonPath, previewCenter]);
 
   const fitMapToPolygon = (path) => {
     if (!mapRef.current || !window.google || !Array.isArray(path) || path.length < 3) {
@@ -356,7 +417,21 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
         </Space>
       }
     >
-      {isLoaded ? (
+      {!googleMapsApiKey ? (
+        <Alert
+          type="error"
+          showIcon
+          message="Google Maps API key is missing"
+          description="Set VITE_GOOGLE_MAPS_KEY in the admin deployment environment and rebuild the admin app."
+        />
+      ) : loadError ? (
+        <Alert
+          type="error"
+          showIcon
+          message="Google Maps failed to load"
+          description="Check that Maps JavaScript API is enabled, billing is active, and the API key allows this deployed IP/domain as an HTTP referrer."
+        />
+      ) : isLoaded ? (
         <>
           <Card
             style={{
@@ -424,18 +499,17 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
                 <Tag color={polygonPath.length >= 3 ? 'success' : 'warning'} icon={polygonPath.length >= 3 ? <CheckCircleFilled /> : <EnvironmentOutlined />}>
                   {polygonPath.length >= 3
                     ? isDrawing
-                      ? `${polygonPath.length} points added, click Start marker to close`
+                      ? `${polygonPath.length} points added, click Start point to close`
                       : `${polygonPath.length} polygon points ready`
                     : 'Draw at least 3 points'}
                 </Tag>
                 <Tag color="processing">
                   Center: {previewCenter.lat.toFixed(5)}, {previewCenter.lng.toFixed(5)}
                 </Tag>
-                <Tag color="purple">Radius preview: {previewRadiusMeters} m</Tag>
               </Space>
 
               <Typography.Text type="secondary">
-                Click `Draw Boundary`, then click around the branch on the map to place points. Click the `Start` marker again or press `Close Boundary` to finish. After that, drag polygon points to refine it. The saved zone appears in green.
+                Click `Draw Boundary`, then click around the branch on the map to place points. Click the `Start` point again or press `Close Boundary` to finish. After that, drag polygon points to refine it. The saved zone appears in green.
               </Typography.Text>
             </Space>
           </Card>
@@ -495,12 +569,17 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
             onClick={handleMapClick}
             onLoad={(map) => {
               mapRef.current = map;
+              setMap(map);
               if (polygonPath.length >= 3) {
                 fitMapToPolygon(polygonPath);
               }
             }}
+            onUnmount={() => {
+              mapRef.current = null;
+              setMap(null);
+            }}
           >
-            <Marker position={center} />
+            <AdvancedMapMarker map={map} position={center} label="Branch" />
 
             {branch?.address ? (
               <InfoWindow position={center}>
@@ -514,15 +593,11 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
             {polygonPath.length >= 3 ? <Polygon path={polygonPath} options={polygonStyle} onLoad={bindEditablePolygon} /> : null}
 
             {polygonPath.map((point, index) => (
-              <Marker
+              <AdvancedMapMarker
                 key={`${point.lat}-${point.lng}-${index}`}
+                map={map}
                 position={point}
-                label={{
-                  text: index === 0 ? 'Start' : String(index + 1),
-                  color: '#ffffff',
-                  fontSize: '11px',
-                  fontWeight: '700',
-                }}
+                label={index === 0 ? 'Start' : String(index + 1)}
                 onClick={() => {
                   if (isDrawing && index === 0 && polygonPath.length >= 3) {
                     closePolygon();
@@ -530,30 +605,6 @@ export default function GeoFenceDrawer({ open, branch, onClose }) {
                 }}
               />
             ))}
-
-            {previewRadiusMeters > 0 ? (
-              <Circle
-                center={previewCenter}
-                radius={previewRadiusMeters}
-                options={{
-                  strokeColor: '#0f766e',
-                  strokeOpacity: 0.55,
-                  strokeWeight: 1,
-                  fillColor: '#14b8a6',
-                  fillOpacity: 0.08,
-                }}
-              />
-            ) : null}
-
-            {previewRadiusMeters > 0 ? (
-              <InfoWindow position={previewCenter}>
-                <div style={{ minWidth: 160 }}>
-                  <strong>Fence Preview</strong>
-                  <div>Center: {previewCenter.lat.toFixed(5)}, {previewCenter.lng.toFixed(5)}</div>
-                  <div>Radius: {previewRadiusMeters} m</div>
-                </div>
-              </InfoWindow>
-            ) : null}
           </GoogleMap>
         </>
       ) : null}

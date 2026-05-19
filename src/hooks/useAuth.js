@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 export const useAuth = () => {
   const auth = useSelector((state) => state.auth);
   const role = auth.user?.role;
-  const canAccessAdminPortal = ['admin', 'manager', 'superadmin'].includes(role);
+  const canAccessAdminPortal = ['admin', 'manager'].includes(role);
 
   return {
     user: auth.user,

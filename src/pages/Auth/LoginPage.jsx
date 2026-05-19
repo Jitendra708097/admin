@@ -74,7 +74,7 @@ export default function LoginPage() {
         throw new Error('Invalid login response');
       }
 
-      if (!['admin', 'manager', 'superadmin'].includes(authPayload.employee.role)) {
+      if (!['admin', 'manager'].includes(authPayload.employee.role)) {
         throw new Error('This account does not have admin portal access');
       }
 

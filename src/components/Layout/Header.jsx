@@ -8,6 +8,7 @@ import { LogoutOutlined, SettingOutlined, LockOutlined, BellOutlined, BgColorsOu
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
 import { logout } from '../../store/authSlice.js';
+import { useLogoutMutation } from '../../store/api/authApi.js';
 import NotificationBell from './NotificationBell.jsx';
 
 const { Header } = Layout;
@@ -16,6 +17,7 @@ export default function AppHeader() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
+  const [logoutRequest] = useLogoutMutation();
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Load theme preference on mount
@@ -53,7 +55,8 @@ export default function AppHeader() {
         key: 'logout',
         icon: <LogoutOutlined />,
         label: 'Logout',
-        onClick: () => {
+        onClick: async () => {
+          await logoutRequest().unwrap().catch(() => {});
           dispatch(logout());
           navigate('/login');
         },

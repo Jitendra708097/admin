@@ -30,7 +30,7 @@ export const storage = {
 
   clear: () => {
     try {
-      localStorage.clear();
+      ['user', 'accessToken', 'refreshToken', 'orgInfo'].forEach((key) => localStorage.removeItem(key));
     } catch (error) {
       console.error('Failed to clear localStorage:', error);
     }
