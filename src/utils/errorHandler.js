@@ -20,6 +20,9 @@ const ERROR_MESSAGES = {
   AUTH_017: 'Too many reset attempts. Please wait a little and try again.',
   AUTH_018: 'Please wait a minute before requesting another OTP.',
   EMP_002: 'An employee with this email already exists.',
+  EMP_014: 'Invite cannot be resent because this employee is inactive.',
+  EMP_015: 'Invite cannot be sent because this employee has no email address.',
+  EMP_016: 'Invite cannot be resent because this employee has already completed first login. Ask them to use Forgot Password.',
   ATT_003: 'This employee already has an open session.',
   GEO_003: 'Employee is outside office premises.',
   GEN_001: 'Something went wrong. Please try again.',
@@ -79,6 +82,15 @@ export const clearErrorLog = () => {
  */
 export const parseApiError = (error) => {
   const code = error?.data?.error?.code;
+  const details = error?.data?.error?.details;
+
+  if (Array.isArray(details) && details.length > 0) {
+    return details
+      .map((detail) => detail?.message || detail?.field)
+      .filter(Boolean)
+      .join(', ');
+  }
+
   if (ERROR_MESSAGES[code]) {
     return ERROR_MESSAGES[code];
   }

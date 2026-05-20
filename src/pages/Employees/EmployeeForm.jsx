@@ -94,11 +94,11 @@ export default function EmployeeForm({ open, employee, onClose, onSubmit, loadin
           Assign the right role, branch, shift, and optional department to place the employee correctly in reports and attendance flows.
         </Typography.Paragraph>
 
-        <Form.Item name="role" label="Role" rules={[{ required: true }]}>
+        <Form.Item name="role" label="Role" rules={[{ required: true, message: 'Role is required' }]}>
           <Select size="large" options={ROLES} />
         </Form.Item>
 
-        <Form.Item name="branchId" label="Branch" rules={[{ required: true }]}>
+        <Form.Item name="branchId" label="Branch" rules={[{ required: true, message: 'Branch is required' }]}>
           <Select
             size="large"
             placeholder="Select branch"
@@ -108,7 +108,7 @@ export default function EmployeeForm({ open, employee, onClose, onSubmit, loadin
           />
         </Form.Item>
 
-        <Form.Item name="shiftId" label="Shift" rules={[{ required: true }]}>
+        <Form.Item name="shiftId" label="Shift" rules={[{ required: true, message: 'Shift is required' }]}>
           <Select
             size="large"
             placeholder="Select shift"

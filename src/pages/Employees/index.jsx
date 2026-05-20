@@ -100,6 +100,28 @@ export default function EmployeesPage() {
     }
   };
 
+  const handleResendInvite = async (employee) => {
+    try {
+      const result = await resendInvite(employee.id).unwrap();
+      const email = result?.employeeEmail || employee.email || 'the employee';
+      message.success(`Invite email queued for ${email}. Ask them to check Inbox, Spam, and Promotions.`, 6);
+    } catch (error) {
+      message.error(parseApiError(error), 7);
+    }
+  };
+
+  const normalizeEmployeePayload = (values) => ({
+    ...values,
+    name: values.name?.trim(),
+    email: values.email?.trim().toLowerCase(),
+    phone: values.phone?.trim() || undefined,
+    empCode: values.empCode?.trim() || undefined,
+    branchId: values.branchId || undefined,
+    departmentId: values.departmentId || undefined,
+    shiftId: values.shiftId || undefined,
+    role: values.role || 'employee',
+  });
+
   return (
     <div className={styles.page}>
       <PageHeader
@@ -282,7 +304,7 @@ export default function EmployeesPage() {
           }}
           onDelete={(id) => deleteEmployee(id)}
           onToggleStatus={handleToggleStatus}
-          onResendInvite={(id) => resendInvite(id)}
+          onResendInvite={handleResendInvite}
           onPageChange={(page, pageSize) => setPagination({ current: page, pageSize })}
           onSelectionChange={setSelectedRowKeys}
           selectedRowKeys={selectedRowKeys}
@@ -299,15 +321,25 @@ export default function EmployeesPage() {
         employee={selectedEmployee}
         onClose={() => setShowForm(false)}
         onSubmit={async (values) => {
-          if (selectedEmployee?.id) {
-            await updateEmployee({ id: selectedEmployee.id, ...values });
-            message.success('Employee updated successfully');
-          } else {
-            await createEmployee(values);
-            message.success('Employee created successfully');
-          }
+          try {
+            const payload = normalizeEmployeePayload(values);
+            if (selectedEmployee?.id) {
+              await updateEmployee({ id: selectedEmployee.id, ...payload }).unwrap();
+              message.success('Employee updated successfully');
+            } else {
+              const created = await createEmployee(payload).unwrap();
+              if (created?.welcomeEmailQueued) {
+                message.success(`Employee created. Invite email queued for ${created.email}. Ask them to check Inbox, Spam, and Promotions.`, 7);
+              } else {
+                message.warning(created?.deliveryNote || 'Employee created, but invite email was not queued. Check notification queue health.', 8);
+              }
+            }
 
-          setShowForm(false);
+            setShowForm(false);
+            refetch();
+          } catch (error) {
+            message.error(parseApiError(error), 7);
+          }
         }}
         loading={isCreating || isUpdating}
       />

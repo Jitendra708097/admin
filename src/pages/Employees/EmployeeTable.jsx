@@ -120,7 +120,7 @@ export default function EmployeeTable({
                 key: 'resend',
                 icon: <MailOutlined />,
                 label: 'Resend Invite',
-                onClick: () => onResendInvite?.(record.id),
+                onClick: () => onResendInvite?.(record),
               },
               {
                 key: 'toggle-status',

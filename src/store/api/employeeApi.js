@@ -74,8 +74,9 @@ export const employeeApi = baseApi.injectEndpoints({
       invalidatesTags: ['Employees'],
     }),
     resendInvite: builder.mutation({
-      queryFn: async (id) => ({
-        data: { id },
+      query: (id) => ({
+        url: `/employees/${id}/invite/resend`,
+        method: 'POST',
       }),
       invalidatesTags: ['Employees'],
     }),
