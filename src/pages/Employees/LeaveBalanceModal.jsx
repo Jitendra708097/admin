@@ -2,7 +2,7 @@
  * @module LeaveBalanceModal
  * @description Modal to adjust employee leave balance.
  */
-import { Modal, Form, Input, Button, Space, message, Row, Col, Card, Statistic } from 'antd';
+import { Modal, Form, Input, Button, Row, Col, Card, Statistic, Select } from 'antd';
 
 export default function LeaveBalanceModal({ open, employee, onClose, onSubmit, loading }) {
   const [form] = Form.useForm();
@@ -10,7 +10,12 @@ export default function LeaveBalanceModal({ open, employee, onClose, onSubmit, l
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      onSubmit(values);
+      onSubmit({
+        employeeId: employee?.id,
+        leaveType: values.leaveType,
+        days: Number(values.days || 0),
+        reason: values.reason,
+      });
     } catch (error) {
       console.error('Validation failed:', error);
     }
@@ -32,42 +37,35 @@ export default function LeaveBalanceModal({ open, employee, onClose, onSubmit, l
       ]}
     >
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={12}>
-          <Card size="small">
-            <Statistic title="Casual - Total" value={employee?.casualTotal || 0} />
-          </Card>
-        </Col>
-        <Col xs={12}>
-          <Card size="small">
-            <Statistic title="Casual - Used" value={employee?.casualUsed || 0} />
-          </Card>
-        </Col>
-        <Col xs={12}>
-          <Card size="small">
-            <Statistic title="Sick - Total" value={employee?.sickTotal || 0} />
-          </Card>
-        </Col>
-        <Col xs={12}>
-          <Card size="small">
-            <Statistic title="Sick - Used" value={employee?.sickUsed || 0} />
-          </Card>
-        </Col>
+        {Object.entries(employee?.leaveBalance || {}).slice(0, 4).map(([type, value]) => (
+          <Col xs={12} key={type}>
+            <Card size="small">
+              <Statistic title={type.replace(/_/g, ' ')} value={Number(value || 0)} />
+            </Card>
+          </Col>
+        ))}
       </Row>
 
-      <Form form={form} layout="vertical" initialValues={employee || {}}>
-        <Form.Item name="casualTotal" label="Casual Leave Total">
-          <Input type="number" min={0} />
+      <Form form={form} layout="vertical" initialValues={{ leaveType: 'casual' }}>
+        <Form.Item name="leaveType" label="Leave Type" rules={[{ required: true, message: 'Leave type is required' }]}>
+          <Select
+            options={Object.keys(employee?.leaveBalance || { casual: 0, sick: 0, earned: 0 }).map((type) => ({
+              label: type.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase()),
+              value: type,
+            }))}
+          />
         </Form.Item>
 
-        <Form.Item name="sickTotal" label="Sick Leave Total">
-          <Input type="number" min={0} />
+        <Form.Item
+          name="days"
+          label="Adjustment Days"
+          extra="Use positive days to add balance and negative days to deduct balance."
+          rules={[{ required: true, message: 'Adjustment days are required' }]}
+        >
+          <Input type="number" step="0.5" />
         </Form.Item>
 
-        <Form.Item name="earnedTotal" label="Earned Leave Total">
-          <Input type="number" min={0} />
-        </Form.Item>
-
-        <Form.Item name="notes" label="Notes">
+        <Form.Item name="reason" label="Reason" rules={[{ required: true, message: 'Reason is required' }]}>
           <Input.TextArea rows={3} placeholder="Reason for adjustment" />
         </Form.Item>
       </Form>

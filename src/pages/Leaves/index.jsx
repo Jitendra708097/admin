@@ -4,6 +4,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import dayjs from 'dayjs';
 import {
   App as AntdApp,
   Button,
@@ -12,7 +13,10 @@ import {
   DatePicker,
   Descriptions,
   Drawer,
+  Form,
   Input,
+  InputNumber,
+  Modal,
   Row,
   Select,
   Space,
@@ -34,16 +38,25 @@ import {
   useGetLeaveContextQuery,
   useGetLeavesQuery,
   useGetLeaveTypesQuery,
+  useGetLeavePoliciesQuery,
+  useUpsertLeavePolicyMutation,
+  useGetLeaveLedgerQuery,
+  useGetLeavePayrollReportQuery,
+  useApproveLeaveCancellationMutation,
   useRejectLeaveMutation,
 } from '../../store/api/leaveApi.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
+import { useGetBranchesQuery } from '../../store/api/branchApi.js';
+import { useGetEmployeesQuery } from '../../store/api/employeeApi.js';
 
 const { RangePicker } = DatePicker;
 
 const STATUS_OPTIONS = [
   { label: 'Pending', value: 'pending' },
+  { label: 'Manager Approved', value: 'manager_approved' },
   { label: 'Approved', value: 'approved' },
+  { label: 'Cancel Pending', value: 'cancellation_pending' },
   { label: 'Rejected', value: 'rejected' },
   { label: 'Cancelled', value: 'cancelled' },
 ];
@@ -72,12 +85,17 @@ export default function LeavesPage() {
   const [departmentId, setDepartmentId] = useState();
   const [status, setStatus] = useState();
   const [dateRange, setDateRange] = useState([]);
+  const [policyModalOpen, setPolicyModalOpen] = useState(false);
+  const [editingPolicy, setEditingPolicy] = useState(null);
+  const [policyForm] = Form.useForm();
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
   const debouncedSearch = useDebounce(search);
   const { data: typeData, isLoading: typesLoading } = useGetLeaveTypesQuery();
   const leaveTypes = typeData?.types || [];
   const typeOptions = leaveTypes.map((item) => ({ label: item.label, value: item.type }));
+  const { data: policyData, isLoading: policiesLoading } = useGetLeavePoliciesQuery(undefined, { skip: view !== 'policies' });
+  const [upsertLeavePolicy, { isLoading: savingPolicy }] = useUpsertLeavePolicyMutation();
   const effectiveStatus = view === 'pending' ? 'pending' : status;
   const params = {
     page: pagination.current,
@@ -98,9 +116,19 @@ export default function LeavesPage() {
     { skip: view !== 'calendar' }
   );
   const { data: departmentData } = useGetDepartmentsQuery();
+  const { data: branchData } = useGetBranchesQuery(undefined, { skip: view !== 'policies' });
+  const { data: employeeData } = useGetEmployeesQuery({ limit: 200 }, { skip: view !== 'policies' });
   const { data: balanceData, isLoading: balancesLoading } = useGetLeaveBalancesQuery(
     { departmentId },
     { skip: view !== 'balances' }
+  );
+  const { data: ledgerData, isLoading: ledgerLoading } = useGetLeaveLedgerQuery(
+    { departmentId, type },
+    { skip: view !== 'ledger' }
+  );
+  const { data: payrollData, isLoading: payrollLoading } = useGetLeavePayrollReportQuery(
+    { dateFrom: params.dateFrom, dateTo: params.dateTo },
+    { skip: view !== 'payroll' }
   );
   const { data: contextData, isFetching: contextLoading } = useGetLeaveContextQuery(
     selectedLeave?.id || detailLeave?.id,
@@ -108,11 +136,16 @@ export default function LeavesPage() {
   );
   const [approveLeave, { isLoading: approving }] = useApproveLeaveMutation();
   const [rejectLeave, { isLoading: rejecting }] = useRejectLeaveMutation();
+  const [approveLeaveCancellation, { isLoading: approvingCancellation }] = useApproveLeaveCancellationMutation();
 
   const leaves = data?.leaves || [];
   const stats = data?.stats || {};
   const departments = flattenDepartments(departmentData?.departments || []);
   const balances = balanceData?.balances || [];
+  const policies = policyData?.policies || [];
+  const workflows = policyData?.workflows || [];
+  const branches = branchData?.branches || branchData?.data?.branches || [];
+  const employees = employeeData?.employees || [];
   const showRequests = view === 'pending' || view === 'all';
 
   const viewButtons = [
@@ -120,7 +153,10 @@ export default function LeavesPage() {
     { key: 'all', label: 'All Requests' },
     { key: 'calendar', label: 'Calendar' },
     { key: 'balances', label: 'Leave Balance' },
+    { key: 'ledger', label: 'Ledger' },
     { key: 'types', label: 'Leave Types' },
+    { key: 'policies', label: 'Leave Policies' },
+    { key: 'payroll', label: 'Payroll Report' },
   ];
 
   const resetFilters = () => {
@@ -136,6 +172,48 @@ export default function LeavesPage() {
     setSelectedLeave(leave);
     setModalAction(action);
     setShowApprovalModal(true);
+  };
+
+  const openPolicyModal = (policy = null) => {
+    setEditingPolicy(policy);
+    policyForm.setFieldsValue({
+      id: policy?.id,
+      name: policy?.name || '',
+      scopeType: policy?.scopeType || 'org',
+      scopeId: policy?.scopeId || undefined,
+      effectiveFrom: policy?.effectiveFrom ? dayjs(policy.effectiveFrom) : dayjs().startOf('year'),
+      effectiveTo: policy?.effectiveTo ? dayjs(policy.effectiveTo) : null,
+      accrualFrequency: policy?.accrualFrequency || 'yearly',
+      approvalWorkflowId: policy?.approvalWorkflowId || workflows[0]?.id,
+      isActive: policy?.isActive ?? true,
+      entitlements: leaveTypes.reduce((accumulator, typeItem) => {
+        accumulator[typeItem.type] = Number(policy?.entitlements?.[typeItem.type] ?? typeItem.yearlyDefaultBalance ?? 0);
+        return accumulator;
+      }, {}),
+      settings: {
+        halfDayAllowed: policy?.settings?.halfDayAllowed ?? true,
+        includeWeekends: policy?.settings?.includeWeekends ?? false,
+        includeHolidays: policy?.settings?.includeHolidays ?? false,
+        allowNegativeBalance: policy?.settings?.allowNegativeBalance ?? false,
+        noticeDays: policy?.settings?.noticeDays ?? 0,
+        maxConsecutiveDays: policy?.settings?.maxConsecutiveDays ?? null,
+        requiresDocumentAfterDays: policy?.settings?.requiresDocumentAfterDays ?? null,
+      },
+    });
+    setPolicyModalOpen(true);
+  };
+
+  const submitPolicy = async () => {
+    const values = await policyForm.validateFields();
+    await upsertLeavePolicy({
+      id: editingPolicy?.id,
+      ...values,
+      effectiveFrom: values.effectiveFrom?.format('YYYY-MM-DD'),
+      effectiveTo: values.effectiveTo ? values.effectiveTo.format('YYYY-MM-DD') : null,
+    }).unwrap();
+    message.success('Leave policy saved');
+    setPolicyModalOpen(false);
+    setEditingPolicy(null);
   };
 
   const balanceColumns = useMemo(() => [
@@ -167,6 +245,37 @@ export default function LeavesPage() {
     { title: 'Half-day', dataIndex: 'halfDayAllowed', key: 'halfDayAllowed', render: (value) => (value ? 'Allowed' : 'No') },
     { title: 'Paid', dataIndex: 'paid', key: 'paid', render: (value) => (value ? 'Paid' : 'Unpaid') },
     { title: 'Default Balance', dataIndex: 'yearlyDefaultBalance', key: 'yearlyDefaultBalance' },
+  ];
+  const ledgerColumns = [
+    { title: 'Employee', dataIndex: 'employeeName', render: (value) => value || '-' },
+    { title: 'Type', dataIndex: 'leaveType' },
+    { title: 'Action', dataIndex: 'transactionType' },
+    { title: 'Days', dataIndex: 'days' },
+    { title: 'Balance After', dataIndex: 'balanceAfter' },
+    { title: 'Reason', dataIndex: 'reason', render: (value) => value || '-' },
+    { title: 'Date', dataIndex: 'effectiveDate' },
+  ];
+  const payrollColumns = [
+    { title: 'Employee', dataIndex: 'employeeName', render: (value, record) => value || record.employeeCode || '-' },
+    { title: 'Type', dataIndex: 'leaveType' },
+    { title: 'Paid', dataIndex: 'paid', render: (value) => (value ? 'Paid' : 'Unpaid') },
+    { title: 'From', dataIndex: 'fromDate' },
+    { title: 'To', dataIndex: 'toDate' },
+    { title: 'Days', dataIndex: 'days' },
+    { title: 'LOP Days', dataIndex: 'lopDays' },
+  ];
+  const policyColumns = [
+    { title: 'Policy', dataIndex: 'name', render: (value, record) => (
+      <Space direction="vertical" size={0}>
+        <Typography.Text strong>{value}</Typography.Text>
+        <Typography.Text type="secondary">{record.isDefault ? 'Default organisation policy' : record.approvalWorkflowName || 'Workflow assigned'}</Typography.Text>
+      </Space>
+    ) },
+    { title: 'Scope', render: (_, record) => `${record.scopeType}${record.scopeId ? `: ${record.scopeId}` : ''}` },
+    { title: 'Effective', render: (_, record) => `${record.effectiveFrom || '-'} to ${record.effectiveTo || 'ongoing'}` },
+    { title: 'Status', dataIndex: 'isActive', render: (value) => <Tag color={value ? 'green' : 'default'}>{value ? 'Active' : 'Inactive'}</Tag> },
+    { title: 'Types', render: (_, record) => Object.entries(record.entitlements || {}).map(([key, value]) => <Tag key={key}>{key}: {value}</Tag>) },
+    { title: 'Actions', render: (_, record) => <Button size="small" onClick={() => openPolicyModal(record)}>Edit</Button> },
   ];
 
   useEffect(() => {
@@ -277,6 +386,32 @@ export default function LeavesPage() {
         </Card>
       ) : null}
 
+      {view === 'policies' ? (
+        <Card
+          bordered={false}
+          title="Leave Policies"
+          extra={<Button type="primary" onClick={() => openPolicyModal()}>New Policy</Button>}
+        >
+          <Table rowKey="id" columns={policyColumns} dataSource={policies} loading={policiesLoading || typesLoading} scroll={{ x: 1100 }} />
+        </Card>
+      ) : null}
+
+      {view === 'ledger' ? (
+        <Card bordered={false}>
+          <Table rowKey="id" columns={ledgerColumns} dataSource={ledgerData?.entries || []} loading={ledgerLoading} scroll={{ x: 900 }} />
+        </Card>
+      ) : null}
+
+      {view === 'payroll' ? (
+        <Card
+          bordered={false}
+          loading={payrollLoading}
+          title={`Paid ${payrollData?.summary?.paidDays || 0} days - LOP ${payrollData?.summary?.lopDays || 0} days`}
+        >
+          <Table rowKey={(record) => `${record.employeeId}-${record.leaveType}-${record.fromDate}`} columns={payrollColumns} dataSource={payrollData?.rows || []} scroll={{ x: 900 }} />
+        </Card>
+      ) : null}
+
       <Drawer title="Leave Request Details" open={Boolean(detailLeave)} onClose={() => setDetailLeave(null)} width={760}>
         {detailLeave ? (
           <Space direction="vertical" size={16} style={{ width: '100%' }}>
@@ -321,8 +456,13 @@ export default function LeavesPage() {
         context={contextData}
         action={modalAction}
         onApprove={async (id) => {
-          await approveLeave({ id }).unwrap();
-          message.success('Leave approved');
+          if (selectedLeave?.status === 'cancellation_pending') {
+            await approveLeaveCancellation({ id }).unwrap();
+            message.success('Leave cancellation approved');
+          } else {
+            await approveLeave({ id }).unwrap();
+            message.success('Leave approved');
+          }
           setShowApprovalModal(false);
           setSelectedLeave(null);
         }}
@@ -336,8 +476,157 @@ export default function LeavesPage() {
           setShowApprovalModal(false);
           setSelectedLeave(null);
         }}
-        loading={approving || rejecting || contextLoading}
+        loading={approving || approvingCancellation || rejecting || contextLoading}
       />
+
+      <Modal
+        title={editingPolicy ? 'Edit Leave Policy' : 'New Leave Policy'}
+        open={policyModalOpen}
+        onCancel={() => {
+          setPolicyModalOpen(false);
+          setEditingPolicy(null);
+        }}
+        onOk={submitPolicy}
+        confirmLoading={savingPolicy}
+        width={860}
+        forceRender
+        destroyOnHidden
+      >
+        <Form form={policyForm} layout="vertical">
+          <Row gutter={16}>
+            <Col xs={24} md={12}>
+              <Form.Item name="name" label="Policy Name" rules={[{ required: true, message: 'Policy name is required' }]}>
+                <Input placeholder="Default Leave Policy" />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={6}>
+              <Form.Item name="scopeType" label="Scope" rules={[{ required: true }]}>
+                <Select
+                  options={[
+                    { label: 'Organisation', value: 'org' },
+                    { label: 'Branch', value: 'branch' },
+                    { label: 'Department', value: 'department' },
+                    { label: 'Employee', value: 'employee' },
+                  ]}
+                />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={6}>
+              <Form.Item noStyle shouldUpdate={(prev, next) => prev.scopeType !== next.scopeType}>
+                {({ getFieldValue }) => {
+                  const scopeType = getFieldValue('scopeType');
+                  const options = scopeType === 'branch'
+                    ? branches.map((branch) => ({ label: branch.name, value: branch.id }))
+                    : scopeType === 'department'
+                      ? departments
+                      : scopeType === 'employee'
+                        ? employees.map((employee) => ({ label: `${employee.name} (${employee.empCode || employee.email || 'employee'})`, value: employee.id }))
+                        : [];
+
+                  return (
+                    <Form.Item
+                      name="scopeId"
+                      label="Scope Target"
+                      rules={scopeType === 'org' ? [] : [{ required: true, message: 'Scope target is required' }]}
+                    >
+                      <Select
+                        allowClear
+                        showSearch
+                        disabled={scopeType === 'org'}
+                        optionFilterProp="label"
+                        placeholder={scopeType === 'org' ? 'All employees' : 'Select target'}
+                        options={options}
+                      />
+                    </Form.Item>
+                  );
+                }}
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="effectiveFrom" label="Effective From" rules={[{ required: true }]}>
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="effectiveTo" label="Effective To">
+                <DatePicker style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="approvalWorkflowId" label="Approval Workflow">
+                <Select options={workflows.map((workflow) => ({ label: workflow.name, value: workflow.id }))} />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Card size="small" title="Entitlements" style={{ marginBottom: 16 }}>
+            <Row gutter={16}>
+              {leaveTypes.map((typeItem) => (
+                <Col xs={12} md={6} key={typeItem.type}>
+                  <Form.Item name={['entitlements', typeItem.type]} label={typeItem.label}>
+                    <InputNumber min={0} step={0.5} style={{ width: '100%' }} />
+                  </Form.Item>
+                </Col>
+              ))}
+            </Row>
+          </Card>
+
+          <Card size="small" title="Rules">
+            <Row gutter={16}>
+              <Col xs={24} md={8}>
+                <Form.Item name={['settings', 'halfDayAllowed']} label="Half-day">
+                  <Select options={[{ label: 'Allowed', value: true }, { label: 'Blocked', value: false }]} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item name={['settings', 'includeWeekends']} label="Weekends">
+                  <Select options={[{ label: 'Exclude', value: false }, { label: 'Include', value: true }]} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item name={['settings', 'includeHolidays']} label="Holidays">
+                  <Select options={[{ label: 'Exclude', value: false }, { label: 'Include', value: true }]} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item name={['settings', 'noticeDays']} label="Notice Days">
+                  <InputNumber min={0} style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item name={['settings', 'maxConsecutiveDays']} label="Max Consecutive Days">
+                  <InputNumber min={0} style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item name={['settings', 'requiresDocumentAfterDays']} label="Document After Days">
+                  <InputNumber min={0} step={0.5} style={{ width: '100%' }} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item name={['settings', 'allowNegativeBalance']} label="Negative Balance">
+                  <Select options={[{ label: 'Blocked', value: false }, { label: 'Allowed', value: true }]} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item name="accrualFrequency" label="Accrual">
+                  <Select options={[
+                    { label: 'None', value: 'none' },
+                    { label: 'Monthly', value: 'monthly' },
+                    { label: 'Quarterly', value: 'quarterly' },
+                    { label: 'Yearly', value: 'yearly' },
+                  ]} />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={8}>
+                <Form.Item name="isActive" label="Status">
+                  <Select options={[{ label: 'Active', value: true }, { label: 'Inactive', value: false }]} />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Card>
+        </Form>
+      </Modal>
     </div>
   );
 }

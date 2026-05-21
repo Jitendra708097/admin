@@ -19,6 +19,7 @@ export default function LeaveApprovalModal({
   const [form] = Form.useForm();
   const { message } = AntdApp.useApp();
   const selectedBalance = context?.selectedBalance;
+  const canReview = ['pending', 'manager_approved', 'cancellation_pending'].includes(leave?.status);
 
   const handleApprove = async () => {
     if (!leave?.id) {
@@ -51,14 +52,14 @@ export default function LeaveApprovalModal({
         <Button key="close" onClick={onClose}>
           Close
         </Button>,
-        leave.status === 'pending' ? (
+        canReview ? (
           <Button key="reject" danger onClick={handleReject} loading={loading} icon={<CloseOutlined />}>
             Reject
           </Button>
         ) : null,
-        leave.status === 'pending' ? (
+        canReview ? (
           <Button key="approve" type="primary" onClick={handleApprove} loading={loading} icon={<CheckOutlined />}>
-            Approve
+            {leave.status === 'cancellation_pending' ? 'Approve Cancellation' : 'Approve'}
           </Button>
         ) : null,
       ].filter(Boolean)}
@@ -111,7 +112,7 @@ export default function LeaveApprovalModal({
           <Alert type="error" showIcon message="Rejection reason" description={leave.rejectionReason} />
         ) : null}
 
-        {leave.status === 'pending' ? (
+        {canReview ? (
           <Form form={form} layout="vertical" initialValues={{ note: '' }}>
             <Form.Item
               name="note"

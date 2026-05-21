@@ -62,7 +62,7 @@ export default function Sidebar() {
     {
       key: '/leaves',
       icon: <CheckOutlined />,
-      label: 'Leave Requests',
+      label: 'Leave Management',
       badge: 0,
       onClick: () => navigate('/leaves'),
     },

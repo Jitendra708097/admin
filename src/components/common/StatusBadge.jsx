@@ -18,8 +18,11 @@ const STATUS_CONFIG = {
   weekend: { color: '#8c8c8c', label: 'Weekend' },
   not_marked: { color: '#8c8c8c', label: 'Not Marked' },
   pending: { color: '#faad14', label: 'Pending' },
+  manager_approved: { color: '#1890ff', label: 'Manager Approved' },
   approved: { color: '#52c41a', label: 'Approved' },
   rejected: { color: '#ff4d4f', label: 'Rejected' },
+  cancellation_pending: { color: '#faad14', label: 'Cancel Pending' },
+  cancelled: { color: '#8c8c8c', label: 'Cancelled' },
   active: { color: '#52c41a', label: 'Active' },
   inactive: { color: '#8c8c8c', label: 'Inactive' },
 };

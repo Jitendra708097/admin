@@ -366,8 +366,13 @@ export default function EmployeesPage() {
         employee={selectedEmployee}
         onClose={() => setShowLeaveBalance(false)}
         onSubmit={async (values) => {
-          await updateLeaveBalance(values);
-          setShowLeaveBalance(false);
+          try {
+            await updateLeaveBalance(values).unwrap();
+            message.success('Leave balance adjusted');
+            setShowLeaveBalance(false);
+          } catch (error) {
+            message.error(parseApiError(error), 7);
+          }
         }}
         loading={false}
       />

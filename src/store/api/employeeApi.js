@@ -81,9 +81,12 @@ export const employeeApi = baseApi.injectEndpoints({
       invalidatesTags: ['Employees'],
     }),
     updateLeaveBalance: builder.mutation({
-      queryFn: async (values) => ({
-        data: values,
+      query: (body) => ({
+        url: '/leave/balances/adjust',
+        method: 'POST',
+        body,
       }),
+      invalidatesTags: ['Employees', 'Leaves'],
     }),
   }),
   overrideExisting: true,
