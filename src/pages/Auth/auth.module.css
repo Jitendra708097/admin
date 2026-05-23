@@ -70,3 +70,7 @@
 .inlineLinkButton {
   padding-inline: 0;
 }
+
+.inlineLinkButton:disabled {
+  color: #8c8c8c;
+}

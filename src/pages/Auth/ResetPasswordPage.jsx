@@ -1,9 +1,12 @@
+import { useEffect, useState } from 'react';
 import { App as AntdApp, Button, Card, Form, Input, Row, Col, Typography } from 'antd';
 import { ArrowLeftOutlined, LockOutlined, MailOutlined, SafetyOutlined } from '@ant-design/icons';
-import { Link, useLocation, useNavigate } from 'react-router';
-import { useResetPasswordMutation } from '../../store/api/authApi.js';
+import { useLocation, useNavigate } from 'react-router';
+import { useForgotPasswordMutation, useResetPasswordMutation } from '../../store/api/authApi.js';
 import { parseApiError } from '../../utils/errorHandler.js';
 import styles from './auth.module.css';
+
+const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function ResetPasswordPage() {
   const [form] = Form.useForm();
@@ -11,9 +14,23 @@ export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [resetPassword, { isLoading }] = useResetPasswordMutation();
+  const [forgotPassword, { isLoading: isResending }] = useForgotPasswordMutation();
+  const [resendSeconds, setResendSeconds] = useState(location.state?.resendCooldownSeconds ?? 0);
 
   const prefilledEmail = location.state?.email || '';
   const expiresInMinutes = location.state?.expiresInMinutes ?? 10;
+
+  useEffect(() => {
+    if (resendSeconds <= 0) {
+      return undefined;
+    }
+
+    const timerId = window.setInterval(() => {
+      setResendSeconds((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timerId);
+  }, [resendSeconds]);
 
   const onFinish = async (values) => {
     try {
@@ -29,6 +46,29 @@ export default function ResetPasswordPage() {
       message.error(parseApiError(error));
     }
   };
+
+  const handleResendOtp = async () => {
+    try {
+      const values = await form.validateFields(['email']);
+      const response = await forgotPassword({
+        email: values.email,
+      }).unwrap();
+
+      message.success(response?.emailSent ? 'A fresh OTP has been sent to your email address' : 'If the account exists, an OTP has been sent');
+      setResendSeconds(RESEND_COOLDOWN_SECONDS);
+    } catch (error) {
+      if (error?.errorFields) {
+        return;
+      }
+
+      if (error?.data?.error?.code === 'AUTH_018') {
+        setResendSeconds(RESEND_COOLDOWN_SECONDS);
+      }
+      message.error(parseApiError(error));
+    }
+  };
+
+  const resendDisabled = isResending || resendSeconds > 0;
 
   return (
     <Row justify="center" align="middle" className={styles.authShell}>
@@ -112,7 +152,15 @@ export default function ResetPasswordPage() {
               <Button type="link" icon={<ArrowLeftOutlined />} onClick={() => navigate('/login')} className={styles.inlineLinkButton}>
                 Back to login
               </Button>
-              <Link to="/forgot-password">Resend OTP</Link>
+              <Button
+                type="link"
+                onClick={handleResendOtp}
+                disabled={resendDisabled}
+                loading={isResending}
+                className={styles.inlineLinkButton}
+              >
+                {resendSeconds > 0 ? `Resend OTP in ${resendSeconds}s` : 'Resend OTP'}
+              </Button>
             </div>
           </Form>
         </Card>

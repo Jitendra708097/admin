@@ -5,6 +5,8 @@ import { useForgotPasswordMutation } from '../../store/api/authApi.js';
 import { parseApiError } from '../../utils/errorHandler.js';
 import styles from './auth.module.css';
 
+const RESEND_COOLDOWN_SECONDS = 60;
+
 export default function ForgotPasswordPage() {
   const [form] = Form.useForm();
   const { message } = AntdApp.useApp();
@@ -22,6 +24,7 @@ export default function ForgotPasswordPage() {
         state: {
           email: values.email,
           expiresInMinutes: response?.expiresInMinutes ?? 10,
+          resendCooldownSeconds: RESEND_COOLDOWN_SECONDS,
         },
       });
     } catch (error) {
