@@ -157,7 +157,7 @@ export default function DepartmentsPage() {
     },
     { title: 'Branch', dataIndex: 'branchName', render: (value) => value || '-' },
     { title: 'Shift', dataIndex: 'shiftName', render: (value) => value || '-' },
-    { title: 'Role', dataIndex: 'role', render: (value) => <Tag>{value}</Tag> },
+    { title: 'Designation', dataIndex: 'designationName', render: (value) => <Tag>{value || 'Unassigned'}</Tag> },
     {
       title: 'Face',
       dataIndex: 'isFaceEnrolled',

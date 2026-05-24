@@ -131,9 +131,9 @@ export default function BranchesPage() {
       render: (value) => value || 'Unassigned',
     },
     {
-      title: 'Role',
-      dataIndex: 'role',
-      render: (value) => <Tag>{value}</Tag>,
+      title: 'Designation',
+      dataIndex: 'designationName',
+      render: (value) => <Tag>{value || 'Unassigned'}</Tag>,
     },
     {
       title: 'Face',

@@ -203,7 +203,7 @@ export default function EmployeeDetailPage() {
           <Descriptions.Item label="Branch">{employee?.branchName}</Descriptions.Item>
           <Descriptions.Item label="Department">{employee?.departmentName || '-'}</Descriptions.Item>
           <Descriptions.Item label="Shift">{employee?.shiftName}</Descriptions.Item>
-          <Descriptions.Item label="Role">{employee?.role}</Descriptions.Item>
+          <Descriptions.Item label="Designation">{employee?.designationName || '-'}</Descriptions.Item>
           <Descriptions.Item label="Password Setup">
             {employee?.requiresPasswordChange ? <Tag color="gold">Pending</Tag> : <Tag color="green">Completed</Tag>}
           </Descriptions.Item>

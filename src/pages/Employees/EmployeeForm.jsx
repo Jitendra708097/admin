@@ -3,29 +3,28 @@
  * @description Create/edit employee drawer form.
  */
 import { useEffect } from 'react';
-import { Button, Divider, Drawer, Form, Input, Select, Space, Typography } from 'antd';
+import { AutoComplete, Button, Divider, Drawer, Form, Input, Select, Space, Typography } from 'antd';
 import { useGetBranchesQuery } from '../../store/api/branchApi.js';
 import { useGetShiftsQuery } from '../../store/api/shiftApi.js';
 import { useGetDepartmentsQuery } from '../../store/api/departmentApi.js';
-
-const ROLES = [
-  { label: 'Employee', value: 'employee' },
-  { label: 'Manager', value: 'manager' },
-  { label: 'Admin', value: 'admin' },
-];
+import { useGetDesignationsQuery } from '../../store/api/designationApi.js';
 
 export default function EmployeeForm({ open, employee, onClose, onSubmit, loading }) {
   const [form] = Form.useForm();
   const { data: branches } = useGetBranchesQuery();
   const { data: shifts } = useGetShiftsQuery();
   const { data: departments } = useGetDepartmentsQuery();
+  const { data: designations } = useGetDesignationsQuery();
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    form.setFieldsValue(employee || { role: 'employee' });
+    form.setFieldsValue(employee ? {
+      ...employee,
+      designationName: employee.designationName || undefined,
+    } : {});
   }, [employee, form, open]);
 
   const handleSubmit = async () => {
@@ -61,7 +60,7 @@ export default function EmployeeForm({ open, employee, onClose, onSubmit, loadin
       <Form
         form={form}
         layout="vertical"
-        initialValues={{ role: 'employee' }}
+        initialValues={{}}
       >
         <Typography.Title level={5} style={{ marginBottom: 4 }}>
           Basic details
@@ -91,11 +90,18 @@ export default function EmployeeForm({ open, employee, onClose, onSubmit, loadin
           Access and reporting
         </Typography.Title>
         <Typography.Paragraph type="secondary" style={{ marginBottom: 20 }}>
-          Assign the right role, branch, shift, and optional department to place the employee correctly in reports and attendance flows.
+          Assign the designation, branch, shift, and optional department to place the employee correctly in reports and attendance flows.
         </Typography.Paragraph>
 
-        <Form.Item name="role" label="Role" rules={[{ required: true, message: 'Role is required' }]}>
-          <Select size="large" options={ROLES} />
+        <Form.Item name="designationName" label="Designation" rules={[{ required: true, message: 'Designation is required' }]}>
+          <AutoComplete
+            size="large"
+            placeholder="Select or type designation"
+            options={designations?.designations?.map((item) => ({ label: item.name, value: item.name })) || []}
+            filterOption={(inputValue, option) =>
+              option.value.toLowerCase().includes(inputValue.toLowerCase())
+            }
+          />
         </Form.Item>
 
         <Form.Item name="branchId" label="Branch" rules={[{ required: true, message: 'Branch is required' }]}>

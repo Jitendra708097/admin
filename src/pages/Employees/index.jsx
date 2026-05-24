@@ -65,7 +65,7 @@ export default function EmployeesPage() {
     return {
       total: data?.pagination?.count || 0,
       active: employees.filter((employee) => employee.status === 'active').length,
-      adminsAndManagers: employees.filter((employee) => ['admin', 'manager'].includes(employee.role)).length,
+      designations: new Set(employees.map((employee) => employee.designationName).filter(Boolean)).size,
       setupPending: employees.filter((employee) => employee.requiresPasswordChange).length,
     };
   }, [data?.pagination?.count, employees]);
@@ -116,17 +116,17 @@ export default function EmployeesPage() {
     email: values.email?.trim().toLowerCase(),
     phone: values.phone?.trim() || undefined,
     empCode: values.empCode?.trim() || undefined,
+    designationName: values.designationName?.trim() || undefined,
     branchId: values.branchId || undefined,
     departmentId: values.departmentId || undefined,
     shiftId: values.shiftId || undefined,
-    role: values.role || 'employee',
   });
 
   return (
     <div className={styles.page}>
       <PageHeader
         title="Employees"
-        subtitle="Manage onboarding, roles, and workforce structure from one clean workspace."
+        subtitle="Manage onboarding, designations, and workforce structure from one clean workspace."
         actions={[
           <Button key="bulk" size="large" icon={<UploadOutlined />} onClick={() => setShowBulk(true)}>
             Bulk Upload
@@ -159,7 +159,7 @@ export default function EmployeesPage() {
         </Col>
         <Col xs={24} sm={12} xl={6}>
           <Card className={styles.statCard} bordered={false}>
-            <Statistic title="Admins + managers" value={stats.adminsAndManagers} />
+            <Statistic title="Designations in view" value={stats.designations} />
           </Card>
         </Col>
         <Col xs={24} sm={12} xl={6}>

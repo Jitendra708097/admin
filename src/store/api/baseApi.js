@@ -30,6 +30,7 @@ export const baseApi = createApi({
     'Org',
     'Branches',
     'Departments',
+    'Designations',
     'Shifts',
     'Employees',
     'Attendance',

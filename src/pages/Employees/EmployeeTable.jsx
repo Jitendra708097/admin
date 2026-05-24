@@ -1,7 +1,6 @@
 import { Avatar, Button, Dropdown, Space, Table, Tooltip, Typography } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, DeleteOutlined, EditOutlined, EyeOutlined, MailOutlined, MoreOutlined, StopOutlined } from '@ant-design/icons';
 import Skeleton from '../../components/common/Skeleton.jsx';
-import RoleBadge from '../../components/common/RoleBadge.jsx';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
 
 export default function EmployeeTable({
@@ -68,10 +67,10 @@ export default function EmployeeTable({
       key: 'branchName',
     },
     {
-      title: 'Role',
-      dataIndex: 'role',
-      key: 'role',
-      render: (role) => <RoleBadge role={role} />,
+      title: 'Designation',
+      dataIndex: 'designationName',
+      key: 'designationName',
+      render: (value) => value || 'Unassigned',
     },
     {
       title: 'Status',

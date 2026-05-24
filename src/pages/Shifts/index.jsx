@@ -89,7 +89,7 @@ export default function ShiftsPage() {
       ),
     },
     { title: 'Department', dataIndex: 'departmentName', key: 'departmentName', render: (value) => value || '-' },
-    { title: 'Role', dataIndex: 'role', key: 'role', render: (value) => <Tag>{value}</Tag> },
+    { title: 'Designation', dataIndex: 'designationName', key: 'designationName', render: (value) => <Tag>{value || 'Unassigned'}</Tag> },
     { title: 'Status', dataIndex: 'status', key: 'status', render: (value) => <StatusBadge status={value} /> },
   ];
 

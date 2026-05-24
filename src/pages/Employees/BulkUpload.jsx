@@ -36,9 +36,9 @@ export default function BulkUpload({ open, loading, onUpload, onClose, results }
     const shiftName = shifts?.shifts?.[0]?.name || 'General Shift';
 
     return [
-      ['name', 'email', 'phone', 'branch_name', 'department_name', 'shift_name', 'role', 'emp_code'],
-      ['Rahul Sharma', 'rahul@company.com', '9876543210', branchName, departmentName, shiftName, 'employee', 'EMP001'],
-      ['Priya Singh', 'priya@company.com', '9876543211', branchName, '', shiftName, 'manager', ''],
+      ['name', 'email', 'phone', 'designation_name', 'branch_name', 'department_name', 'shift_name', 'emp_code'],
+      ['Rahul Sharma', 'rahul@company.com', '9876543210', 'Professor', branchName, departmentName, shiftName, 'EMP001'],
+      ['Priya Singh', 'priya@company.com', '9876543211', 'Registrar', branchName, '', shiftName, ''],
     ];
   }, [branches, departments, shifts]);
 
@@ -82,7 +82,7 @@ export default function BulkUpload({ open, loading, onUpload, onClose, results }
         description={
           <div>
             <Typography.Paragraph style={{ marginBottom: 8 }}>
-              Required columns: <strong>name</strong>, <strong>email</strong>, <strong>branch_name</strong> or <strong>branch_id</strong>, <strong>shift_name</strong> or <strong>shift_id</strong>, <strong>role</strong>.
+              Required columns: <strong>name</strong>, <strong>email</strong>, <strong>designation_name</strong>, <strong>branch_name</strong> or <strong>branch_id</strong>, <strong>shift_name</strong> or <strong>shift_id</strong>.
             </Typography.Paragraph>
             <Typography.Paragraph style={{ marginBottom: 8 }}>
               Upload limit: <strong>{BULK_UPLOAD_LIMIT} employees</strong> per file. Use branch, department, and shift names exactly as they appear in the system.
