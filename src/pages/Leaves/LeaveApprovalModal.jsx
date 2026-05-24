@@ -6,6 +6,15 @@ import { Alert, App as AntdApp, Button, Card, Col, Form, Input, Modal, Row, Spac
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
 
+function getReviewErrorMessage(error, fallback) {
+  return (
+    error?.data?.error?.message ||
+    error?.error?.message ||
+    error?.message ||
+    fallback
+  );
+}
+
 export default function LeaveApprovalModal({
   open,
   leave,
@@ -26,8 +35,12 @@ export default function LeaveApprovalModal({
       message.error('Leave request not found');
       return;
     }
-    await onApprove(leave.id);
-    form.resetFields();
+    try {
+      await onApprove(leave.id);
+      form.resetFields();
+    } catch (error) {
+      message.error(getReviewErrorMessage(error, 'Unable to approve leave request.'));
+    }
   };
 
   const handleReject = async () => {
@@ -35,9 +48,17 @@ export default function LeaveApprovalModal({
       message.error('Leave request not found');
       return;
     }
-    const values = await form.validateFields();
-    await onReject(leave.id, values.note);
-    form.resetFields();
+    try {
+      const values = await form.validateFields();
+      if (!String(values.note || '').trim()) {
+        message.error('Rejection reason is required');
+        return;
+      }
+      await onReject(leave.id, values.note);
+      form.resetFields();
+    } catch (error) {
+      message.error(getReviewErrorMessage(error, 'Unable to reject leave request.'));
+    }
   };
 
   if (!leave) return null;
@@ -117,7 +138,6 @@ export default function LeaveApprovalModal({
             <Form.Item
               name="note"
               label="Rejection reason"
-              rules={action === 'reject' ? [{ required: true, message: 'Rejection reason is required' }] : []}
             >
               <Input.TextArea rows={3} placeholder="Required when rejecting" />
             </Form.Item>

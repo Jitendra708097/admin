@@ -21,6 +21,7 @@ import {
   Tabs,
   Tag,
   Typography,
+  Upload,
 } from 'antd';
 import {
   CalendarOutlined,
@@ -64,7 +65,7 @@ function parseCsv(text) {
   });
 }
 
-function ImportModal({ open, branches = [], loading, onCancel, onSubmit }) {
+function ImportModal({ open, branches = [], loading, onCancel, onSubmit, onFileSubmit }) {
   const [text, setText] = useState('name,date,branchName,isRecurring,description\nRepublic Day,2026-01-26,,true,National holiday');
 
   const handleSubmit = () => {
@@ -86,6 +87,15 @@ function ImportModal({ open, branches = [], loading, onCancel, onSubmit }) {
     onSubmit(holidays);
   };
 
+  const handleFileUpload = async ({ file, onSuccess, onError }) => {
+    try {
+      await onFileSubmit(file);
+      onSuccess?.();
+    } catch (error) {
+      onError?.(error);
+    }
+  };
+
   return (
     <Modal
       title="Bulk Import Holidays"
@@ -97,7 +107,25 @@ function ImportModal({ open, branches = [], loading, onCancel, onSubmit }) {
       width={720}
     >
       <Typography.Paragraph type="secondary">
-        Use CSV columns: name, date, branchName, isRecurring, description. Leave branchName empty for all branches.
+        Upload Excel with columns: name, date, branchName, isRecurring, description. Leave branchName empty for all branches.
+      </Typography.Paragraph>
+      <Upload.Dragger
+        accept=".xlsx,.xls,.csv"
+        maxCount={1}
+        showUploadList={false}
+        customRequest={handleFileUpload}
+        disabled={loading}
+      >
+        <p className="ant-upload-drag-icon">
+          <UploadOutlined />
+        </p>
+        <Typography.Text strong>Click or drag Excel file to import</Typography.Text>
+        <Typography.Paragraph type="secondary" className="mt-2 mb-0">
+          Supported formats: XLSX, XLS, CSV
+        </Typography.Paragraph>
+      </Upload.Dragger>
+      <Typography.Paragraph type="secondary" className="mt-4">
+        Or paste CSV below with the same columns.
       </Typography.Paragraph>
       <Input.TextArea rows={10} value={text} onChange={(event) => setText(event.target.value)} />
     </Modal>
@@ -178,11 +206,26 @@ export default function HolidaysPage() {
 
     try {
       const response = await bulkImportHolidays({ holidays: rows }).unwrap();
-      const errors = response?.results?.filter((result) => result.status === 'error') || [];
+      const errors = response?.failed ?? response?.results?.filter((result) => result.status === 'error')?.length ?? 0;
+      const created = response?.created ?? rows.length - errors;
       setShowImport(false);
-      message.success(`Import completed. ${rows.length - errors.length} added, ${errors.length} failed.`);
+      message.success(`Import completed. ${created} added, ${errors} failed.`);
     } catch (error) {
       message.error(parseApiError(error));
+    }
+  };
+
+  const handleImportFile = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await bulkImportHolidays(formData).unwrap();
+      setShowImport(false);
+      message.success(`Import completed. ${response?.created || 0} added, ${response?.failed || 0} failed.`);
+    } catch (error) {
+      message.error(parseApiError(error));
+      throw error;
     }
   };
 
@@ -432,6 +475,7 @@ export default function HolidaysPage() {
         loading={isImporting}
         onCancel={() => setShowImport(false)}
         onSubmit={handleImport}
+        onFileSubmit={handleImportFile}
       />
     </div>
   );

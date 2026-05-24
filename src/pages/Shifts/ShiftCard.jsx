@@ -48,7 +48,7 @@ function formatDuration(minutes) {
   const total = Number(minutes || 0);
   const hours = Math.floor(total / 60);
   const mins = total % 60;
-  return `${hours}h ${mins}m`;
+  return `${hours} hr ${mins} min`;
 }
 
 export default function ShiftCard({ shift, onEdit, onDelete, onDuplicate, onViewEmployees }) {
@@ -56,6 +56,7 @@ export default function ShiftCard({ shift, onEdit, onDelete, onDuplicate, onView
   const grossMinutes = minutesBetween(shift.startTime, shift.endTime, shift.crossesMidnight);
   const expectedWorkMinutes = Math.max(grossMinutes - Number(shift.breakMins || 0), 0);
   const hasEmployees = Number(shift.employeeCount || 0) > 0;
+  const hasSessionCap = shift.maxSessionsPerDay != null && Number(shift.maxSessionsPerDay) > 0;
 
   return (
     <Card
@@ -104,6 +105,7 @@ export default function ShiftCard({ shift, onEdit, onDelete, onDuplicate, onView
         {shift.crossesMidnight ? <Tag color="purple">Crosses midnight</Tag> : <Tag color="green">Same day</Tag>}
         <Tag icon={<UserOutlined />}>{shift.employeeCount || 0} employees</Tag>
         <Tag>{formatDuration(expectedWorkMinutes)} expected work</Tag>
+        {shift.breakMins ? <Tag>{shift.breakMins} min lunch break</Tag> : <Tag>No lunch break deduction</Tag>}
       </Space>
 
       <div className="mb-4 flex gap-1">
@@ -124,7 +126,7 @@ export default function ShiftCard({ shift, onEdit, onDelete, onDuplicate, onView
           <Statistic title="Late After" value={addMinutes(shift.startTime, shift.graceCheckIn)} />
         </Col>
         <Col xs={12}>
-          <Statistic title="Checkout Grace" value={`${shift.graceCheckOut || 0}m`} />
+          <Statistic title="Checkout Grace" value={shift.graceCheckOut || 0} suffix="min" />
         </Col>
         <Col xs={12}>
           <Statistic title="Present After" value={formatDuration(shift.halfDayAfter)} />
@@ -136,7 +138,7 @@ export default function ShiftCard({ shift, onEdit, onDelete, onDuplicate, onView
           <Statistic title="Overtime After" value={formatDuration(shift.otAfter)} />
         </Col>
         <Col xs={12}>
-          <Statistic title="Sessions / Day" value={shift.maxSessionsPerDay || 0} />
+          <Statistic title="Sessions / Day" value={hasSessionCap ? shift.maxSessionsPerDay : 'No cap'} suffix={hasSessionCap ? 'sessions' : undefined} />
         </Col>
       </Row>
     </Card>

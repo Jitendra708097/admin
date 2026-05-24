@@ -23,21 +23,21 @@ const DEFAULT_SHIFT = {
   absentAfter: 120,
   otAfter: 480,
   minOtMins: 30,
-  breakMins: 60,
-  minSessionMins: 30,
-  sessionCooldownMins: 15,
-  maxSessionsPerDay: 3,
+  breakMins: null,
+  minSessionMins: null,
+  sessionCooldownMins: null,
+  maxSessionsPerDay: null,
   crossesMidnight: false,
 };
 
-function numberField(name, label, tooltip, min = 0) {
+function numberField(name, label, tooltip, min = 0, unit = 'min', required = true) {
   return (
     <Form.Item
       name={name}
       label={<Tooltip title={tooltip}>{label}</Tooltip>}
-      rules={[{ required: true, message: `${label} is required` }]}
+      rules={required ? [{ required: true, message: `${label} is required` }] : []}
     >
-      <InputNumber min={min} style={{ width: '100%' }} />
+      <InputNumber min={min} addonAfter={unit} style={{ width: '100%' }} />
     </Form.Item>
   );
 }
@@ -120,7 +120,7 @@ export default function ShiftForm({ open, shift, initialValues, onClose, onSubmi
       duration: formatDuration(shiftMinutes),
       expectedWork: formatDuration(expectedWorkMinutes),
       lateAfter: addMinutes(values.startTime, values.graceCheckIn),
-      checkoutGrace: `${values.graceCheckOut || 0}m`,
+      checkoutGrace: `${values.graceCheckOut || 0} min`,
     };
   }, [expectedWorkMinutes, shiftMinutes, values.endTime, values.graceCheckIn, values.graceCheckOut, values.startTime]);
 
@@ -138,7 +138,7 @@ export default function ShiftForm({ open, shift, initialValues, onClose, onSubmi
       return;
     }
 
-    if (Number(nextValues.minSessionMins) > duration) {
+    if (nextValues.minSessionMins != null && Number(nextValues.minSessionMins) > duration) {
       form.setFields([{ name: 'minSessionMins', errors: ['Minimum session cannot exceed shift duration.'] }]);
       return;
     }
@@ -148,6 +148,10 @@ export default function ShiftForm({ open, shift, initialValues, onClose, onSubmi
       startTime: nextValues.startTime.format('HH:mm:ss'),
       endTime: nextValues.endTime.format('HH:mm:ss'),
       crossesMidnight: Boolean(nextValues.crossesMidnight || nextValues.endTime.isBefore(nextValues.startTime)),
+      breakMins: nextValues.breakMins ?? null,
+      minSessionMins: nextValues.minSessionMins ?? null,
+      sessionCooldownMins: nextValues.sessionCooldownMins ?? null,
+      maxSessionsPerDay: nextValues.maxSessionsPerDay ?? null,
     };
     await onSubmit(formattedValues);
   };
@@ -222,12 +226,12 @@ export default function ShiftForm({ open, shift, initialValues, onClose, onSubmi
           <Col xs={12}>{numberField('minOtMins', 'Minimum overtime', 'Minimum overtime minutes required before counting overtime.')}</Col>
         </Row>
         <Row gutter={16}>
-          <Col xs={12}>{numberField('breakMins', 'Break minutes', 'Default break duration deducted from the shift.')}</Col>
-          <Col xs={12}>{numberField('minSessionMins', 'Minimum session', 'Minimum allowed work session length.')}</Col>
+          <Col xs={12}>{numberField('breakMins', 'Lunch break', 'Optional break duration deducted from the shift. Leave blank if the organisation does not deduct lunch break.', 0, 'min', false)}</Col>
+          <Col xs={12}>{numberField('minSessionMins', 'Minimum session', 'Optional minimum allowed work session length. Leave blank if sessions are not restricted.', 0, 'min', false)}</Col>
         </Row>
         <Row gutter={16}>
-          <Col xs={12}>{numberField('sessionCooldownMins', 'Session cooldown', 'Wait time before another attendance session may begin.')}</Col>
-          <Col xs={12}>{numberField('maxSessionsPerDay', 'Max sessions/day', 'Maximum number of sessions an employee can open in one day.', 1)}</Col>
+          <Col xs={12}>{numberField('sessionCooldownMins', 'Session cooldown', 'Optional wait time before another attendance session may begin.', 0, 'min', false)}</Col>
+          <Col xs={12}>{numberField('maxSessionsPerDay', 'Max sessions/day', 'Optional maximum number of sessions an employee can open in one day. Leave blank for no cap.', 1, 'sessions', false)}</Col>
         </Row>
       </Form>
     </Drawer>

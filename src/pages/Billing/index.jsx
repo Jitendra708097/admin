@@ -45,6 +45,12 @@ function isInvoiceOverdue(invoice) {
   return invoice?.isOverdue || (invoice?.status !== 'paid' && invoice?.dueDate && new Date(invoice.dueDate) < new Date());
 }
 
+function base64ToBlob(base64, contentType) {
+  const binary = atob(base64 || '');
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  return new Blob([bytes], { type: contentType || 'application/pdf' });
+}
+
 export default function BillingPage() {
   const { message } = App.useApp();
   const [form] = Form.useForm();
@@ -109,13 +115,15 @@ export default function BillingPage() {
   const handleDownload = async (invoiceId) => {
     try {
       const invoiceFile = await downloadInvoice(invoiceId).unwrap();
-      const blob = new Blob([invoiceFile.content || 'Invoice preview unavailable'], {
-        type: invoiceFile.contentType || 'text/html;charset=utf-8',
-      });
+      const blob = invoiceFile.encoding === 'base64'
+        ? base64ToBlob(invoiceFile.content, invoiceFile.contentType)
+        : new Blob([invoiceFile.content || 'Invoice preview unavailable'], {
+            type: invoiceFile.contentType || 'application/pdf',
+          });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = invoiceFile.filename || `${invoiceId}.html`;
+      link.download = invoiceFile.filename || `${invoiceId}.pdf`;
       link.click();
       URL.revokeObjectURL(url);
     } catch (error) {
