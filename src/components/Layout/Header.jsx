@@ -1,10 +1,9 @@
 /**
  * @module Header
- * @description Top header bar with notifications, profile, admin info, and theme toggle.
+ * @description Top header bar with notifications, profile, and admin info.
  */
-import { useState, useEffect } from 'react';
-import { Layout, Dropdown, Badge, Space, Button, Avatar, Tag } from 'antd';
-import { LogoutOutlined, SettingOutlined, LockOutlined, BellOutlined, BgColorsOutlined } from '@ant-design/icons';
+import { Layout, Dropdown, Space, Button, Avatar, Tag } from 'antd';
+import { LogoutOutlined, SettingOutlined, LockOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
 import { logout } from '../../store/authSlice.js';
@@ -18,23 +17,6 @@ export default function AppHeader() {
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
   const [logoutRequest] = useLogoutMutation();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Load theme preference on mount
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setIsDarkMode(savedTheme === 'dark');
-    if (savedTheme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-  }, []);
-
-  const handleThemeToggle = () => {
-    const newTheme = isDarkMode ? 'light' : 'dark';
-    setIsDarkMode(!isDarkMode);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-  };
 
   const profileMenu = {
     items: [
@@ -75,14 +57,6 @@ export default function AppHeader() {
 
       <Space size="large">
         <NotificationBell />
-
-        <Button
-          type="text"
-          size="large"
-          icon={<BgColorsOutlined />}
-          title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          onClick={handleThemeToggle}
-        />
 
         <Dropdown menu={profileMenu} trigger={['click']}>
           <Button type="text" size="large">
