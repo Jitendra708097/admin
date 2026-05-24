@@ -54,14 +54,3 @@
   margin-right: 12px;
 }
 
-/* Dark theme support (future) */
-@media (prefers-color-scheme: dark) {
-  .skeleton {
-    --skeleton-background: linear-gradient(
-      90deg,
-      #2a2a2a 25%,
-      #3a3a3a 50%,
-      #2a2a2a 75%
-    );
-  }
-}
