@@ -146,6 +146,7 @@ export default function HolidaysPage() {
   const [selectedHoliday, setSelectedHoliday] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [deletingHolidayId, setDeletingHolidayId] = useState(null);
 
   const queryParams = {
     ...filters,
@@ -190,11 +191,14 @@ export default function HolidaysPage() {
   };
 
   const handleDelete = async (holiday) => {
+    setDeletingHolidayId(holiday.id);
     try {
       await deleteHoliday(holiday.id).unwrap();
       message.success('Holiday deleted');
     } catch (error) {
       message.error(parseApiError(error));
+    } finally {
+      setDeletingHolidayId(null);
     }
   };
 
@@ -280,7 +284,7 @@ export default function HolidaysPage() {
             }}
           />
           <Popconfirm title="Delete holiday?" onConfirm={() => handleDelete(record)}>
-            <Button danger icon={<DeleteOutlined />} loading={isDeleting} />
+            <Button danger icon={<DeleteOutlined />} loading={isDeleting && deletingHolidayId === record.id} />
           </Popconfirm>
         </Space>
       ),

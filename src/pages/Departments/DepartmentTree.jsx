@@ -58,7 +58,7 @@ function toTreeData(departments, handlers) {
                   : 'Move child departments and reassign employees before deleting.'
               }
               okText="Delete"
-              okButtonProps={{ danger: true, disabled: !canDelete }}
+              okButtonProps={{ danger: true, disabled: !canDelete, loading: handlers.deletingDeptId === department.id }}
               onConfirm={() => {
                 if (canDelete) {
                   handlers.onDelete(department.id);
@@ -77,7 +77,7 @@ function toTreeData(departments, handlers) {
   });
 }
 
-export default function DepartmentTree({ data, onAdd, onEdit, onDelete, onView, onCreateFirst }) {
+export default function DepartmentTree({ data, onAdd, onEdit, onDelete, onView, onCreateFirst, deletingDeptId }) {
   if (!data || data.length === 0) {
     return (
       <Empty description="No departments yet" className="py-12">
@@ -90,7 +90,7 @@ export default function DepartmentTree({ data, onAdd, onEdit, onDelete, onView, 
 
   return (
     <Tree
-      treeData={toTreeData(data, { onAdd, onEdit, onDelete, onView })}
+      treeData={toTreeData(data, { onAdd, onEdit, onDelete, onView, deletingDeptId })}
       defaultExpandAll
       blockNode
       showLine

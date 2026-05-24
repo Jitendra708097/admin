@@ -28,6 +28,7 @@ export default function BranchCard({
   onEdit,
   onSetGeofence,
   onDelete,
+  deleting = false,
   onViewEmployees,
   onViewStats,
 }) {
@@ -61,7 +62,7 @@ export default function BranchCard({
                 ? 'This branch will be removed.'
                 : 'Reassign employees before deleting this branch.'
             }
-            okButtonProps={{ danger: true, disabled: !canDelete }}
+            okButtonProps={{ danger: true, disabled: !canDelete, loading: deleting }}
             okText="Delete"
             onConfirm={() => {
               if (canDelete) {

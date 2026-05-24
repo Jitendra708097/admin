@@ -128,6 +128,7 @@ export default function NotificationsPage() {
   const [search, setSearch] = useState('');
   const [dateRange, setDateRange] = useState(null);
   const [page, setPage] = useState(1);
+  const [pendingDeviceAction, setPendingDeviceAction] = useState(null);
   const debouncedSearch = useDebounce(search);
 
   const queryParams = useMemo(() => {
@@ -190,6 +191,7 @@ export default function NotificationsPage() {
       return;
     }
 
+    setPendingDeviceAction({ notificationId: notification.id, action });
     try {
       if (action === 'approve') {
         await approveDeviceException({ id: exceptionId }).unwrap();
@@ -204,6 +206,8 @@ export default function NotificationsPage() {
       }
     } catch (error) {
       message.error(parseApiError(error));
+    } finally {
+      setPendingDeviceAction(null);
     }
   };
 
@@ -212,13 +216,16 @@ export default function NotificationsPage() {
     const status = getNotificationStatus(notification);
 
     if (categoryName === 'device_exception' && status === 'action_needed') {
+      const approvingThis = pendingDeviceAction?.notificationId === notification.id && pendingDeviceAction?.action === 'approve';
+      const rejectingThis = pendingDeviceAction?.notificationId === notification.id && pendingDeviceAction?.action === 'reject';
+
       return (
         <Space onClick={(event) => event.stopPropagation()}>
           <Popconfirm
             title="Approve this device exception?"
             onConfirm={(event) => handleDeviceAction(event, notification, 'approve')}
           >
-            <Button size="small" type="primary" loading={approvingDevice}>
+            <Button size="small" type="primary" loading={approvingThis} disabled={rejectingThis || approvingDevice || rejectingDevice}>
               Approve
             </Button>
           </Popconfirm>
@@ -226,7 +233,7 @@ export default function NotificationsPage() {
             title="Reject this device exception?"
             onConfirm={(event) => handleDeviceAction(event, notification, 'reject')}
           >
-            <Button size="small" danger loading={rejectingDevice}>
+            <Button size="small" danger loading={rejectingThis} disabled={approvingThis || approvingDevice || rejectingDevice}>
               Reject
             </Button>
           </Popconfirm>

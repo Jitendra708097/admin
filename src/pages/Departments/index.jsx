@@ -81,6 +81,7 @@ export default function DepartmentsPage() {
   const navigate = useNavigate();
   const [selectedDept, setSelectedDept] = useState(null);
   const [detailDept, setDetailDept] = useState(null);
+  const [deletingDeptId, setDeletingDeptId] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
@@ -132,11 +133,14 @@ export default function DepartmentsPage() {
   }, [departments, filter, search]);
 
   const handleDelete = async (id) => {
+    setDeletingDeptId(id);
     try {
       await deleteDept(id).unwrap();
       message.success('Department deleted successfully');
     } catch (error) {
       message.error(parseApiError(error));
+    } finally {
+      setDeletingDeptId(null);
     }
   };
 
@@ -248,6 +252,7 @@ export default function DepartmentsPage() {
               setShowForm(true);
             }}
             onDelete={handleDelete}
+            deletingDeptId={deletingDeptId}
           />
         )}
       </Card>

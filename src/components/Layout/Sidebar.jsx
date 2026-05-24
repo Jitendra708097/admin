@@ -71,7 +71,7 @@ export default function Sidebar() {
   const orgInfo = useSelector((state) => state.auth?.orgInfo || {});
   const { data } = useGetOrgSettingsQuery();
   const { unreadCount } = useNotifications();
-  const [logoutRequest] = useLogoutMutation();
+  const [logoutRequest, { isLoading: isLoggingOut }] = useLogoutMutation();
   const org = data?.org || orgInfo || {};
 
   const navigateTo = (path) => {
@@ -254,6 +254,7 @@ export default function Sidebar() {
               type="text"
               danger
               block
+              loading={isLoggingOut}
               icon={<LogoutOutlined />}
               onClick={handleLogout}
               className={sidebarCollapsed ? 'flex items-center justify-center px-0' : 'flex items-center'}

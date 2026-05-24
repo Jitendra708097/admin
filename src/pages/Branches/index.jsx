@@ -55,6 +55,7 @@ export default function BranchesPage() {
   const [statsBranch, setStatsBranch] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showGeofence, setShowGeofence] = useState(false);
+  const [deletingBranchId, setDeletingBranchId] = useState(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
 
@@ -102,11 +103,14 @@ export default function BranchesPage() {
   }, [branches, filter, search]);
 
   const handleDelete = async (id) => {
+    setDeletingBranchId(id);
     try {
       await deleteBranch(id).unwrap();
       message.success('Branch deleted');
     } catch (error) {
       message.error(parseApiError(error) || 'Failed to delete branch');
+    } finally {
+      setDeletingBranchId(null);
     }
   };
 
@@ -233,6 +237,7 @@ export default function BranchesPage() {
                   setShowGeofence(true);
                 }}
                 onDelete={handleDelete}
+                deleting={deletingBranchId === branch.id}
                 onViewEmployees={setEmployeeBranch}
                 onViewStats={setStatsBranch}
               />

@@ -16,7 +16,7 @@ export default function AppHeader() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
-  const [logoutRequest] = useLogoutMutation();
+  const [logoutRequest, { isLoading: isLoggingOut }] = useLogoutMutation();
 
   const profileMenu = {
     items: [
@@ -36,7 +36,8 @@ export default function AppHeader() {
       {
         key: 'logout',
         icon: <LogoutOutlined />,
-        label: 'Logout',
+        label: isLoggingOut ? 'Logging out...' : 'Logout',
+        disabled: isLoggingOut,
         onClick: async () => {
           await logoutRequest().unwrap().catch(() => {});
           dispatch(logout());

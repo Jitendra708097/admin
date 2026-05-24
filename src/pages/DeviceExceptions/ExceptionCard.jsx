@@ -4,7 +4,7 @@
  */
 import { Card, Button, Space, Tag } from 'antd';
 
-export default function ExceptionCard({ exception, onApprove, onReject, loading, highlighted = false }) {
+export default function ExceptionCard({ exception, onApprove, onReject, approveLoading, rejectLoading, highlighted = false }) {
   return (
     <Card className="mb-4" styles={{ body: highlighted ? { borderLeft: '4px solid #1677ff' } : undefined }}>
       <div className="flex justify-between items-start">
@@ -21,7 +21,8 @@ export default function ExceptionCard({ exception, onApprove, onReject, loading,
         <Button
           type="primary"
           size="small"
-          loading={loading}
+          loading={approveLoading}
+          disabled={rejectLoading}
           onClick={() => onApprove(exception.id)}
         >
           Approve
@@ -29,7 +30,8 @@ export default function ExceptionCard({ exception, onApprove, onReject, loading,
         <Button
           danger
           size="small"
-          loading={loading}
+          loading={rejectLoading}
+          disabled={approveLoading}
           onClick={() => onReject(exception.id)}
         >
           Reject
