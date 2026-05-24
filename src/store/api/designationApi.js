@@ -16,6 +16,21 @@ export const designationApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Designations'],
     }),
+    updateDesignation: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/designations/${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['Designations', 'Employees'],
+    }),
+    deleteDesignation: builder.mutation({
+      query: (id) => ({
+        url: `/designations/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Designations', 'Employees'],
+    }),
   }),
   overrideExisting: true,
 });
@@ -23,4 +38,6 @@ export const designationApi = baseApi.injectEndpoints({
 export const {
   useGetDesignationsQuery,
   useCreateDesignationMutation,
+  useUpdateDesignationMutation,
+  useDeleteDesignationMutation,
 } = designationApi;

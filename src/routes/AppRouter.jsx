@@ -18,6 +18,7 @@ import RegularisationsPage from '../pages/Regularisations/index.jsx';
 import ShiftsPage from '../pages/Shifts/index.jsx';
 import BranchesPage from '../pages/Branches/index.jsx';
 import DepartmentsPage from '../pages/Departments/index.jsx';
+import DesignationsPage from '../pages/Designations/index.jsx';
 import NotificationsPage from '../pages/Notifications/index.jsx';
 import DeviceExceptionsPage from '../pages/DeviceExceptions/index.jsx';
 import BillingPage from '../pages/Billing/index.jsx';
@@ -47,6 +48,7 @@ export default function AppRouter() {
           <Route path="/shifts" element={<ShiftsPage />} />
           <Route path="/branches" element={<BranchesPage />} />
           <Route path="/departments" element={<DepartmentsPage />} />
+          <Route path="/designations" element={<DesignationsPage />} />
           <Route path="/holidays" element={<HolidaysPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />

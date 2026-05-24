@@ -20,6 +20,7 @@ import {
   CreditCardOutlined,
   SettingOutlined,
   LogoutOutlined,
+  TagsOutlined,
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
@@ -39,6 +40,7 @@ function getSelectedKey(pathname) {
     '/regularisations',
     '/notifications',
     '/departments',
+    '/designations',
     '/attendance',
     '/employees',
     '/branches',
@@ -147,6 +149,13 @@ export default function Sidebar() {
       label: <SidebarLabel label="Departments" />,
       title: 'Departments',
       onClick: () => navigateTo('/departments'),
+    },
+    {
+      key: '/designations',
+      icon: <TagsOutlined />,
+      label: <SidebarLabel label="Designations" />,
+      title: 'Designations',
+      onClick: () => navigateTo('/designations'),
     },
     {
       key: '/holidays',
