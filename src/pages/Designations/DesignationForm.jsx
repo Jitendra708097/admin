@@ -11,7 +11,7 @@ export default function DesignationForm({ open, designation, loading, onClose, o
 
     form.setFieldsValue({
       name: designation?.name || '',
-      description: designation?.description || '',
+      code: designation?.code || '',
     });
   }, [designation, form, open]);
 
@@ -51,8 +51,16 @@ export default function DesignationForm({ open, designation, loading, onClose, o
           <Input size="large" placeholder="Professor, HR, Registrar" />
         </Form.Item>
 
-        <Form.Item name="description" label="Description">
-          <Input.TextArea rows={4} maxLength={500} showCount placeholder="Optional internal note" />
+        <Form.Item
+          name="code"
+          label="Designation Code"
+          rules={[
+            { required: true, message: 'Designation code is required' },
+            { max: 40, message: 'Designation code is too long' },
+            { pattern: /^[A-Za-z0-9-]+$/, message: 'Use letters, numbers, and hyphens only' },
+          ]}
+        >
+          <Input size="large" placeholder="PROFESSOR, HR, REGISTRAR" />
         </Form.Item>
       </Form>
     </Drawer>

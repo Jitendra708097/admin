@@ -31,7 +31,7 @@ export default function DesignationsPage() {
 
     return designations.filter((item) =>
       item.name?.toLowerCase().includes(term) ||
-      item.description?.toLowerCase().includes(term)
+      item.code?.toLowerCase().includes(term)
     );
   }, [designations, search]);
 
@@ -78,12 +78,23 @@ export default function DesignationsPage() {
     {
       title: 'Designation',
       dataIndex: 'name',
-      render: (value, record) => (
+      render: (value) => (
         <Space direction="vertical" size={0}>
           <Typography.Text strong>{value}</Typography.Text>
-          <Typography.Text type="secondary">{record.description || 'No description'}</Typography.Text>
         </Space>
       ),
+    },
+    {
+      title: 'Code',
+      dataIndex: 'code',
+      width: 160,
+      render: (value) => <Tag>{value || '-'}</Tag>,
+    },
+    {
+      title: 'Total Employees',
+      dataIndex: 'totalEmployees',
+      width: 160,
+      render: (value) => Number(value || 0),
     },
     {
       title: 'Status',
