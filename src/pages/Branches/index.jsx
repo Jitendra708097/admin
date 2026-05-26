@@ -8,6 +8,7 @@ import {
   Empty,
   Input,
   Row,
+  Segmented,
   Select,
   Skeleton,
   Space,
@@ -15,13 +16,19 @@ import {
   Table,
   Tag,
   Typography,
+  Popconfirm,
+  Tooltip,
 } from 'antd';
 import {
+  AppstoreOutlined,
   CheckCircleOutlined,
+  DeleteOutlined,
+  EditOutlined,
   EnvironmentOutlined,
   ExclamationCircleOutlined,
   PlusOutlined,
   SearchOutlined,
+  TableOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router';
@@ -58,6 +65,7 @@ export default function BranchesPage() {
   const [deletingBranchId, setDeletingBranchId] = useState(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('branchesViewMode') || 'cards');
 
   const { data, isLoading, isFetching } = useGetBranchesQuery();
   const { data: employeeData, isFetching: isEmployeesFetching } = useGetBranchEmployeesQuery(employeeBranch?.id, {
@@ -71,6 +79,11 @@ export default function BranchesPage() {
   const [deleteBranch] = useDeleteBranchMutation();
 
   const branches = data?.branches || [];
+
+  const setPersistedViewMode = (nextViewMode) => {
+    setViewMode(nextViewMode);
+    localStorage.setItem('branchesViewMode', nextViewMode);
+  };
 
   const stats = useMemo(
     () => ({
@@ -147,6 +160,138 @@ export default function BranchesPage() {
     },
   ];
 
+  const branchColumns = [
+    {
+      title: 'Branch',
+      dataIndex: 'name',
+      render: (value, record) => (
+        <Space direction="vertical" size={0}>
+          <Typography.Text strong>{value}</Typography.Text>
+          <Typography.Text type="secondary" ellipsis style={{ maxWidth: 260 }}>
+            {record.address || 'No address provided'}
+          </Typography.Text>
+        </Space>
+      ),
+    },
+    {
+      title: 'Type',
+      dataIndex: 'isRemote',
+      width: 120,
+      render: (value) => <Tag color={value ? 'blue' : 'green'}>{value ? 'Remote' : 'Office'}</Tag>,
+    },
+    {
+      title: 'Employees',
+      dataIndex: 'employeeCount',
+      width: 120,
+      render: (value) => value || 0,
+      sorter: (a, b) => (a.employeeCount || 0) - (b.employeeCount || 0),
+    },
+    {
+      title: 'Geofence',
+      dataIndex: 'hasGeofence',
+      width: 190,
+      render: (value, record) => {
+        const warning = Array.isArray(record.geofenceWarnings) ? record.geofenceWarnings[0] : null;
+        const label = record.isRemote
+          ? 'Remote optional'
+          : value
+            ? warning
+              ? 'Needs review'
+              : 'Ready'
+            : 'Missing';
+        const color = record.isRemote ? 'blue' : value ? (warning ? 'warning' : 'success') : 'error';
+
+        return (
+          <Space direction="vertical" size={2}>
+            <Tag color={color}>{label}</Tag>
+            {warning ? (
+              <Tooltip title={warning}>
+                <Typography.Text type="warning" style={{ fontSize: 12 }}>
+                  Review warning
+                </Typography.Text>
+              </Tooltip>
+            ) : null}
+          </Space>
+        );
+      },
+      filters: [
+        { text: 'Ready', value: 'ready' },
+        { text: 'Missing', value: 'missing' },
+        { text: 'Remote', value: 'remote' },
+      ],
+      onFilter: (value, record) =>
+        (value === 'ready' && (record.hasGeofence || record.isRemote)) ||
+        (value === 'missing' && !record.isRemote && !record.hasGeofence) ||
+        (value === 'remote' && record.isRemote),
+    },
+    {
+      title: 'Polygon',
+      dataIndex: 'polygonPointCount',
+      width: 120,
+      render: (value, record) => (
+        <Space direction="vertical" size={0}>
+          <Typography.Text>{value || 0} points</Typography.Text>
+          {record.geofenceAreaSqMeters ? (
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              {Math.round(record.geofenceAreaSqMeters).toLocaleString()} sq m
+            </Typography.Text>
+          ) : null}
+        </Space>
+      ),
+      sorter: (a, b) => (a.polygonPointCount || 0) - (b.polygonPointCount || 0),
+    },
+    {
+      title: 'WiFi',
+      dataIndex: 'wifiVerificationEnabled',
+      width: 100,
+      render: (value) => <Tag color={value ? 'success' : 'default'}>{value ? 'On' : 'Off'}</Tag>,
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      width: 230,
+      render: (_, record) => {
+        const employeeCount = record.employeeCount || 0;
+        const canDelete = record.canDelete !== false && employeeCount === 0;
+
+        return (
+          <Space wrap>
+            <Tooltip title="Edit branch">
+              <Button type="text" icon={<EditOutlined />} onClick={() => {
+                setSelectedBranch(record);
+                setShowForm(true);
+              }} />
+            </Tooltip>
+            <Tooltip title={record.isRemote ? 'Optional geofence' : 'Set geofence'}>
+              <Button type="text" icon={<EnvironmentOutlined />} onClick={() => {
+                setSelectedBranch(record);
+                setShowGeofence(true);
+              }} />
+            </Tooltip>
+            <Button size="small" icon={<TeamOutlined />} onClick={() => setEmployeeBranch(record)}>
+              Employees
+            </Button>
+            <Popconfirm
+              title="Delete branch?"
+              description={canDelete ? 'This branch will be removed.' : 'Reassign employees before deleting this branch.'}
+              okButtonProps={{ danger: true, disabled: !canDelete, loading: deletingBranchId === record.id }}
+              okText="Delete"
+              onConfirm={() => {
+                if (canDelete) {
+                  handleDelete(record.id);
+                }
+              }}
+            >
+              <Tooltip title={canDelete ? 'Delete branch' : 'Branch has assigned employees'}>
+                <Button type="text" danger icon={<DeleteOutlined />} disabled={!canDelete} />
+              </Tooltip>
+            </Popconfirm>
+          </Space>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -197,7 +342,7 @@ export default function BranchesPage() {
 
       <Card>
         <Row gutter={[12, 12]} align="middle">
-          <Col xs={24} md={14}>
+          <Col xs={24} md={12}>
             <Input
               allowClear
               prefix={<SearchOutlined />}
@@ -206,8 +351,35 @@ export default function BranchesPage() {
               onChange={(event) => setSearch(event.target.value)}
             />
           </Col>
-          <Col xs={24} md={10}>
+          <Col xs={24} md={7}>
             <Select style={{ width: '100%' }} value={filter} onChange={setFilter} options={geofenceFilters} />
+          </Col>
+          <Col xs={24} md={5}>
+            <Segmented
+              block
+              value={viewMode}
+              onChange={setPersistedViewMode}
+              options={[
+                {
+                  label: (
+                    <Space size={6}>
+                      <AppstoreOutlined />
+                      <span>Cards</span>
+                    </Space>
+                  ),
+                  value: 'cards',
+                },
+                {
+                  label: (
+                    <Space size={6}>
+                      <TableOutlined />
+                      <span>Rows</span>
+                    </Space>
+                  ),
+                  value: 'table',
+                },
+              ]}
+            />
           </Col>
         </Row>
       </Card>
@@ -222,7 +394,7 @@ export default function BranchesPage() {
             </Col>
           ))}
         </Row>
-      ) : filteredBranches.length > 0 ? (
+      ) : filteredBranches.length > 0 && viewMode === 'cards' ? (
         <Row gutter={[16, 16]}>
           {filteredBranches.map((branch) => (
             <Col xs={24} md={12} xl={8} key={branch.id}>
@@ -244,6 +416,16 @@ export default function BranchesPage() {
             </Col>
           ))}
         </Row>
+      ) : filteredBranches.length > 0 ? (
+        <Card>
+          <Table
+            rowKey="id"
+            columns={branchColumns}
+            dataSource={filteredBranches}
+            pagination={{ pageSize: 10, showSizeChanger: true }}
+            scroll={{ x: 980 }}
+          />
+        </Card>
       ) : (
         <Card>
           <Empty

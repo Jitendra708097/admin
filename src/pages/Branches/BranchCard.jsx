@@ -4,8 +4,11 @@ import {
   DeleteOutlined,
   EditOutlined,
   EnvironmentOutlined,
+  ExclamationCircleOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
+
+const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 
 function getGeofenceBadge(branch) {
   if (branch.isRemote) {
@@ -23,6 +26,57 @@ function getGeofenceBadge(branch) {
   return { color: 'error', text: 'Geofence missing' };
 }
 
+function getStaticMapUrl(branch) {
+  if (!googleMapsApiKey || !Array.isArray(branch.polygon) || branch.polygon.length < 3) {
+    return null;
+  }
+
+  const path = branch.polygon.map((point) => `${point.lat},${point.lng}`).join('|');
+  const firstPoint = branch.polygon[0];
+  return `https://maps.googleapis.com/maps/api/staticmap?size=520x180&scale=2&maptype=roadmap&path=color:0x15803dff|weight:3|fillcolor:0x16a34a33|${encodeURIComponent(`${path}|${firstPoint.lat},${firstPoint.lng}`)}&key=${googleMapsApiKey}`;
+}
+
+function GeofencePreview({ branch }) {
+  const mapUrl = getStaticMapUrl(branch);
+
+  if (mapUrl) {
+    return (
+      <img
+        src={mapUrl}
+        alt={`${branch.name} geofence preview`}
+        style={{
+          width: '100%',
+          height: 96,
+          objectFit: 'cover',
+          borderRadius: 8,
+          border: '1px solid #d9f7be',
+          display: 'block',
+        }}
+      />
+    );
+  }
+
+  return (
+    <div
+      style={{
+        height: 96,
+        borderRadius: 8,
+        border: `1px dashed ${branch.isRemote ? '#91caff' : '#fed7aa'}`,
+        background: branch.isRemote ? '#e6f4ff' : '#fff7ed',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 12,
+        textAlign: 'center',
+      }}
+    >
+      <Typography.Text type="secondary">
+        {branch.isRemote ? 'Remote branch' : 'No geofence preview'}
+      </Typography.Text>
+    </div>
+  );
+}
+
 export default function BranchCard({
   branch,
   onEdit,
@@ -35,6 +89,7 @@ export default function BranchCard({
   const geofenceBadge = getGeofenceBadge(branch);
   const employeeCount = branch.employeeCount || 0;
   const canDelete = branch.canDelete !== false && employeeCount === 0;
+  const geofenceWarnings = Array.isArray(branch.geofenceWarnings) ? branch.geofenceWarnings : [];
 
   return (
     <Card
@@ -79,6 +134,8 @@ export default function BranchCard({
       style={{ height: '100%' }}
     >
       <Space direction="vertical" size={16} style={{ width: '100%' }}>
+        <GeofencePreview branch={branch} />
+
         <Typography.Paragraph type="secondary" ellipsis={{ rows: 2 }} style={{ margin: 0 }}>
           <EnvironmentOutlined /> {branch.address || 'No address provided'}
         </Typography.Paragraph>
@@ -111,11 +168,16 @@ export default function BranchCard({
                 ? 'Attendance can validate GPS inside this branch boundary.'
                 : 'Draw the branch boundary before using location-restricted attendance.'}
           </Typography.Text>
+          {geofenceWarnings.length > 0 ? (
+            <Typography.Text type="warning" style={{ display: 'block', marginTop: 6 }}>
+              <ExclamationCircleOutlined /> {geofenceWarnings[0]}
+            </Typography.Text>
+          ) : null}
         </div>
 
         <Space wrap>
           <Button icon={<EnvironmentOutlined />} onClick={() => onSetGeofence(branch)}>
-            {branch.hasGeofence ? 'Edit Geofence' : 'Set Geofence'}
+            {branch.isRemote ? 'Optional Geofence' : branch.hasGeofence ? 'Edit Geofence' : 'Set Geofence'}
           </Button>
           <Button icon={<TeamOutlined />} onClick={() => onViewEmployees(branch)}>
             Employees

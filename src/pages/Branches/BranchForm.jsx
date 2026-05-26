@@ -14,6 +14,7 @@ function parseBssids(value) {
 
 export default function BranchForm({ open, branch, onClose, onSubmit, loading }) {
   const [form] = Form.useForm();
+  const isRemote = Form.useWatch('isRemote', form);
 
   useEffect(() => {
     if (!open) {
@@ -38,7 +39,7 @@ export default function BranchForm({ open, branch, onClose, onSubmit, loading })
     const values = await form.validateFields();
     onSubmit({
       ...values,
-      allowedBssids: parseBssids(values.allowedBssids),
+      allowedBssids: values.isRemote ? [] : parseBssids(values.allowedBssids),
     });
   };
 
@@ -67,13 +68,16 @@ export default function BranchForm({ open, branch, onClose, onSubmit, loading })
           <Checkbox>Enable WiFi verification</Checkbox>
         </Form.Item>
 
-        <Form.Item name="allowedBssids" label="Allowed WiFi BSSIDs">
-          <Input.TextArea rows={2} placeholder="Comma separated BSSID values" />
-        </Form.Item>
+        {!isRemote ? (
+          <Form.Item name="allowedBssids" label="Allowed WiFi BSSIDs">
+            <Input.TextArea rows={2} placeholder="Comma separated BSSID values" />
+          </Form.Item>
+        ) : null}
 
         <Typography.Text type="secondary">
-          Geofence is configured after creating the branch. WiFi BSSIDs are optional and can be used as an extra
-          verification signal later.
+          {isRemote
+            ? 'Remote branches do not require a fixed office geofence.'
+            : 'Geofence is configured after creating the branch. WiFi BSSIDs are optional and can be used as an extra verification signal later.'}
         </Typography.Text>
       </Form>
     </Modal>
