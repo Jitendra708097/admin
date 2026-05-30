@@ -23,7 +23,9 @@ export default function LeaveApprovalModal({
   onApprove,
   onReject,
   onClose,
-  loading,
+  approving = false,
+  rejecting = false,
+  contextLoading = false,
 }) {
   const [form] = Form.useForm();
   const { message } = AntdApp.useApp();
@@ -74,12 +76,12 @@ export default function LeaveApprovalModal({
           Close
         </Button>,
         canReview ? (
-          <Button key="reject" danger onClick={handleReject} loading={loading} icon={<CloseOutlined />}>
+          <Button key="reject" danger onClick={handleReject} loading={rejecting} disabled={approving || contextLoading} icon={<CloseOutlined />}>
             Reject
           </Button>
         ) : null,
         canReview ? (
-          <Button key="approve" type="primary" onClick={handleApprove} loading={loading} icon={<CheckOutlined />}>
+          <Button key="approve" type="primary" onClick={handleApprove} loading={approving} disabled={rejecting || contextLoading} icon={<CheckOutlined />}>
             {leave.status === 'cancellation_pending' ? 'Approve Cancellation' : 'Approve'}
           </Button>
         ) : null,

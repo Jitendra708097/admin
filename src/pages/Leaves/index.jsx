@@ -476,7 +476,9 @@ export default function LeavesPage() {
           setShowApprovalModal(false);
           setSelectedLeave(null);
         }}
-        loading={approving || approvingCancellation || rejecting || contextLoading}
+        approving={approving || approvingCancellation}
+        rejecting={rejecting}
+        contextLoading={contextLoading}
       />
 
       <Modal
