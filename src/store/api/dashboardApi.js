@@ -16,6 +16,4 @@ export const dashboardApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
-export const {
-  useGetAdminDashboardSummaryQuery,
-} = dashboardApi;
+export const { useGetAdminDashboardSummaryQuery } = dashboardApi;

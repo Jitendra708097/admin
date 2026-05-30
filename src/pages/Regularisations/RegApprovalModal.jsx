@@ -19,12 +19,12 @@ export default function RegApprovalModal({ open, reg, role, onApprove, onReject,
   const approveLabel = role === 'manager' ? 'Manager Approve' : 'Final Approve';
 
   const handleApprove = async () => {
-    const values = await form.validateFields();
+    const values = await form.validateFields(['note']);
     onApprove(reg.id, values);
   };
 
   const handleReject = async () => {
-    const values = await form.validateFields();
+    const values = await form.validateFields(['reason']);
     onReject(reg.id, values);
   };
 
@@ -87,11 +87,26 @@ export default function RegApprovalModal({ open, reg, role, onApprove, onReject,
         </Card>
       ) : null}
 
+      {reg.managerNotes || reg.finalNotes || reg.approvalNotes || reg.rejectionReason ? (
+        <Card size="small" title="Decision History" style={{ marginBottom: 16 }}>
+          {reg.managerNotes ? <p><strong>Manager note:</strong> {reg.managerNotes}</p> : null}
+          {reg.finalNotes ? <p><strong>Final note:</strong> {reg.finalNotes}</p> : null}
+          {!reg.managerNotes && !reg.finalNotes && reg.approvalNotes ? (
+            <p><strong>Approval note:</strong> {reg.approvalNotes}</p>
+          ) : null}
+          {reg.rejectionReason ? <p><strong>Rejection reason:</strong> {reg.rejectionReason}</p> : null}
+        </Card>
+      ) : null}
+
       <Form form={form} layout="vertical">
         <Form.Item name="note" label="Decision Note">
           <Input.TextArea rows={3} placeholder="Add optional approval or rejection notes" />
         </Form.Item>
-        <Form.Item name="reason" label="Rejection Reason">
+        <Form.Item
+          name="reason"
+          label="Rejection Reason"
+          rules={[{ required: true, message: 'Rejection reason is required when rejecting' }]}
+        >
           <Input.TextArea rows={3} placeholder="Required when rejecting" />
         </Form.Item>
       </Form>
