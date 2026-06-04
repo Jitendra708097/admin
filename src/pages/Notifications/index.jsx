@@ -38,18 +38,8 @@ import {
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useNavigate } from 'react-router';
-import {
-  useGetNotificationsQuery,
-  useMarkNotificationReadMutation,
-  useMarkAllNotificationsReadMutation,
-} from '../../store/api/notificationApi.js';
-import {
-  getNotificationActionLabel,
-  getNotificationCategory,
-  getNotificationPriority,
-  getNotificationStatus,
-  resolveNotificationTarget,
-} from '../../utils/notificationNavigation.js';
+import { useGetNotificationsQuery, useMarkNotificationReadMutation, useMarkAllNotificationsReadMutation } from '../../store/api/notificationApi.js';
+import { getNotificationActionLabel, getNotificationCategory, getNotificationPriority, getNotificationStatus, resolveNotificationTarget } from '../../utils/notificationNavigation.js';
 import { useApproveDeviceExceptionMutation, useRejectDeviceExceptionMutation } from '../../store/api/deviceExceptionApi.js';
 import { useDebounce } from '../../hooks/useDebounce.js';
 import { parseApiError } from '../../utils/errorHandler.js';
@@ -87,20 +77,18 @@ const STATUS_COLORS = {
 };
 
 const CATEGORY_META = {
-  leave: { label: 'Leave', icon: <FileDoneOutlined />, color: 'green' },
-  regularisation: { label: 'Regularisation', icon: <ClockCircleOutlined />, color: 'purple' },
+  leave:            { label: 'Leave', icon: <FileDoneOutlined />, color: 'green' },
+  regularisation:   { label: 'Regularisation', icon: <ClockCircleOutlined />, color: 'purple' },
   device_exception: { label: 'Device exception', icon: <SafetyCertificateOutlined />, color: 'red' },
-  attendance: { label: 'Attendance', icon: <ExclamationCircleOutlined />, color: 'orange' },
-  billing: { label: 'Billing', icon: <CreditCardOutlined />, color: 'blue' },
-  report: { label: 'Report', icon: <ReadOutlined />, color: 'cyan' },
-  employee: { label: 'Employee', icon: <UserOutlined />, color: 'geekblue' },
-  system: { label: 'System', icon: <BellOutlined />, color: 'default' },
+  attendance:       { label: 'Attendance', icon: <ExclamationCircleOutlined />, color: 'orange' },
+  billing:          { label: 'Billing', icon: <CreditCardOutlined />, color: 'blue' },
+  report:           { label: 'Report', icon: <ReadOutlined />, color: 'cyan' },
+  employee:         { label: 'Employee', icon: <UserOutlined />, color: 'geekblue' },
+  system:           { label: 'System', icon: <BellOutlined />, color: 'default' },
 };
 
 function humanize(value) {
-  return String(value || 'info')
-    .replaceAll('_', ' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
+  return String(value || 'info').replaceAll('_', ' ').replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function getRequestId(notification) {

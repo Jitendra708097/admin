@@ -8,10 +8,10 @@ import { useGetShiftsQuery } from '../../store/api/shiftApi.js';
 const BULK_UPLOAD_LIMIT = 500;
 
 export default function BulkUpload({ open, loading, onUpload, onClose, results }) {
-  const { message } = App.useApp();
-  const { data: branches } = useGetBranchesQuery(undefined, { skip: !open });
+  const { message } =           App.useApp();
+  const { data: branches } =    useGetBranchesQuery(undefined, { skip: !open });
   const { data: departments } = useGetDepartmentsQuery(undefined, { skip: !open });
-  const { data: shifts } = useGetShiftsQuery(undefined, { skip: !open });
+  const { data: shifts } =      useGetShiftsQuery(undefined, { skip: !open });
 
   const columns = [
     { title: 'Row', dataIndex: 'row', key: 'row' },
@@ -43,9 +43,7 @@ export default function BulkUpload({ open, loading, onUpload, onClose, results }
   }, [branches, departments, shifts]);
 
   const handleDownloadTemplate = () => {
-    const csv = templateRows
-      .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-      .join('\n');
+    const csv = templateRows.map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');

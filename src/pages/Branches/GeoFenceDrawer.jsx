@@ -1,20 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Alert,
-  Button,
-  Drawer,
-  Space,
-  message,
-  Input,
-  InputNumber,
-  Popconfirm,
-  Typography,
-  Tag,
-  Segmented,
-  Modal,
-  Divider,
-  Tooltip,
-} from 'antd';
+import { Alert, Button, Drawer, Space, message, Input, InputNumber, Popconfirm, Typography, Tag, Segmented, Modal, Divider, Tooltip } from 'antd';
 import {
   AimOutlined,
   EnvironmentOutlined,

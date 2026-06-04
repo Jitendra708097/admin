@@ -132,7 +132,7 @@ export default function EmployeeTable({
                 icon: <DeleteOutlined />,
                 label: 'Delete',
                 danger: true,
-                onClick: () => onDelete(record.id),
+                onClick: () => onDelete?.(record),
               },
             ],
           }}

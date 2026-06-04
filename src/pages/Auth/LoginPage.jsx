@@ -59,10 +59,7 @@ export default function LoginPage() {
   const onFinish = async (values) => {
     setLoginError('');
     try {
-      const response = await login({
-        email: values.email,
-        password: values.password,
-      }).unwrap();
+      const response = await login({ email: values.email, password: values.password }).unwrap();
 
       const authPayload = response?.employee
         ? response

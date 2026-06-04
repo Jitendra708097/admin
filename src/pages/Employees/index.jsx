@@ -24,7 +24,7 @@ import { parseApiError } from '../../utils/errorHandler.js';
 import styles from './employees.module.css';
 
 export default function EmployeesPage() {
-  const { message } = App.useApp();
+  const { message, modal } = App.useApp();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [search, setSearch] = useState('');
@@ -80,14 +80,17 @@ export default function EmployeesPage() {
   };
 
   const handleBulkDelete = async () => {
-    await deleteEmployees(selectedRowKeys).unwrap();
-    setSelectedRowKeys([]);
-    message.success(`${selectedRowKeys.length} employees deleted`);
+    try {
+      const selectedCount = selectedRowKeys.length;
+      await deleteEmployees(selectedRowKeys).unwrap();
+      setSelectedRowKeys([]);
+      message.success(`${selectedCount} employees deleted`);
+    } catch (error) {
+      message.error(parseApiError(error), 7);
+    }
   };
 
-  const handleToggleStatus = async (employee) => {
-    const nextIsActive = employee.status !== 'active';
-
+  const updateEmployeeStatus = async (employee, nextIsActive) => {
     try {
       await updateEmployee({
         id: employee.id,
@@ -97,7 +100,43 @@ export default function EmployeesPage() {
       message.success(`${employee.name} ${nextIsActive ? 'activated' : 'suspended'} successfully`);
     } catch (error) {
       message.error(parseApiError(error));
+      throw error;
     }
+  };
+
+  const handleToggleStatus = (employee) => {
+    const nextIsActive = employee.status !== 'active';
+
+    if (!nextIsActive) {
+      modal.confirm({
+        title: 'Suspend employee?',
+        content: `This will suspend ${employee.name || 'this employee'} and revoke active sessions.`,
+        okText: 'Suspend',
+        okButtonProps: { danger: true },
+        onOk: () => updateEmployeeStatus(employee, nextIsActive),
+      });
+      return;
+    }
+
+    updateEmployeeStatus(employee, nextIsActive).catch(() => {});
+  };
+
+  const handleDeleteEmployee = (employee) => {
+    modal.confirm({
+      title: 'Delete employee?',
+      content: `This will soft delete ${employee.name || 'this employee'} and revoke active sessions.`,
+      okText: 'Delete',
+      okButtonProps: { danger: true },
+      async onOk() {
+        try {
+          await deleteEmployee(employee.id).unwrap();
+          message.success(`${employee.name || 'Employee'} deleted successfully`);
+        } catch (error) {
+          message.error(parseApiError(error), 7);
+          throw error;
+        }
+      },
+    });
   };
 
   const handleResendInvite = async (employee) => {
@@ -302,7 +341,7 @@ export default function EmployeesPage() {
             setSelectedEmployee(employee);
             setShowForm(true);
           }}
-          onDelete={(id) => deleteEmployee(id)}
+          onDelete={handleDeleteEmployee}
           onToggleStatus={handleToggleStatus}
           onResendInvite={handleResendInvite}
           onPageChange={(page, pageSize) => setPagination({ current: page, pageSize })}

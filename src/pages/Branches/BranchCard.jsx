@@ -1,12 +1,5 @@
 import { Badge, Button, Card, Col, Popconfirm, Row, Space, Statistic, Tag, Tooltip, Typography } from 'antd';
-import {
-  BarChartOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  EnvironmentOutlined,
-  ExclamationCircleOutlined,
-  TeamOutlined,
-} from '@ant-design/icons';
+import { BarChartOutlined, DeleteOutlined, EditOutlined, EnvironmentOutlined, ExclamationCircleOutlined, TeamOutlined } from '@ant-design/icons';
 
 const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_KEY;
 
