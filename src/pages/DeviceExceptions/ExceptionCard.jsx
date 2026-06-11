@@ -5,6 +5,9 @@
 import { Card, Button, Space, Tag } from 'antd';
 
 export default function ExceptionCard({ exception, onApprove, onReject, approveLoading, rejectLoading, highlighted = false }) {
+  const canApprove = exception.status === 'pending';
+  const canReject = ['pending', 'approved'].includes(exception.status);
+
   return (
     <Card className="mb-4" styles={{ body: highlighted ? { borderLeft: '4px solid #1677ff' } : undefined }}>
       <div className="flex justify-between items-start">
@@ -17,26 +20,32 @@ export default function ExceptionCard({ exception, onApprove, onReject, approveL
         </div>
         <Tag>{exception.status}</Tag>
       </div>
-      <Space className="mt-4">
-        <Button
-          type="primary"
-          size="small"
-          loading={approveLoading}
-          disabled={rejectLoading}
-          onClick={() => onApprove(exception.id)}
-        >
-          Approve
-        </Button>
-        <Button
-          danger
-          size="small"
-          loading={rejectLoading}
-          disabled={approveLoading}
-          onClick={() => onReject(exception.id)}
-        >
-          Reject
-        </Button>
-      </Space>
+      {canApprove || canReject ? (
+        <Space className="mt-4">
+          {canApprove ? (
+            <Button
+              type="primary"
+              size="small"
+              loading={approveLoading}
+              disabled={rejectLoading}
+              onClick={() => onApprove(exception.id)}
+            >
+              Approve
+            </Button>
+          ) : null}
+          {canReject ? (
+            <Button
+              danger
+              size="small"
+              loading={rejectLoading}
+              disabled={approveLoading}
+              onClick={() => onReject(exception.id)}
+            >
+              Reject
+            </Button>
+          ) : null}
+        </Space>
+      ) : null}
     </Card>
   );
 }
