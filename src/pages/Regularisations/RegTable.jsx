@@ -2,7 +2,25 @@ import { Button, Space, Table, Tag } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import StatusBadge from '../../components/common/StatusBadge.jsx';
 
-export default function RegTable({ data, loading, onView }) {
+function formatTime(value) {
+  if (!value) {
+    return null;
+  }
+
+  return new Date(value).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+export default function RegTable({
+  data,
+  loading,
+  onView,
+  canReview = () => false,
+  pagination = {},
+  onPaginationChange = () => {},
+}) {
   const columns = [
     {
       title: 'Employee',
@@ -27,11 +45,11 @@ export default function RegTable({ data, loading, onView }) {
         const parts = [];
 
         if (record.requestedCheckIn) {
-          parts.push(`IN ${new Date(record.requestedCheckIn).toLocaleTimeString()}`);
+          parts.push(`IN ${formatTime(record.requestedCheckIn)}`);
         }
 
         if (record.requestedCheckOut) {
-          parts.push(`OUT ${new Date(record.requestedCheckOut).toLocaleTimeString()}`);
+          parts.push(`OUT ${formatTime(record.requestedCheckOut)}`);
         }
 
         return parts.length > 0 ? parts.join(' | ') : 'No change submitted';
@@ -55,7 +73,7 @@ export default function RegTable({ data, loading, onView }) {
       render: (_, record) => (
         <Space>
           <Button type="text" icon={<EyeOutlined />} size="small" onClick={() => onView(record)}>
-            Review
+            {canReview(record) ? 'Review' : 'View'}
           </Button>
         </Space>
       ),
@@ -68,7 +86,8 @@ export default function RegTable({ data, loading, onView }) {
       dataSource={data}
       loading={loading}
       rowKey="id"
-      pagination={{ pageSize: 10 }}
+      pagination={pagination}
+      onChange={onPaginationChange}
       scroll={{ x: 960 }}
     />
   );

@@ -9,7 +9,7 @@ function formatDateTime(value) {
   return new Date(value).toLocaleString();
 }
 
-export default function RegApprovalModal({ open, reg, role, onApprove, onReject, onClose, loading }) {
+export default function RegApprovalModal({ open, reg, role, canReview = true, onApprove, onReject, onClose, loading }) {
   const [form] = Form.useForm();
 
   if (!reg) {
@@ -28,23 +28,30 @@ export default function RegApprovalModal({ open, reg, role, onApprove, onReject,
     onReject(reg.id, values);
   };
 
+  const footer = [
+    <Button key="close" onClick={onClose}>
+      Close
+    </Button>,
+  ];
+
+  if (canReview) {
+    footer.push(
+      <Button key="reject" danger onClick={handleReject} loading={loading} icon={<CloseOutlined />}>
+        Reject
+      </Button>,
+      <Button key="approve" type="primary" onClick={handleApprove} loading={loading} icon={<CheckOutlined />}>
+        {approveLabel}
+      </Button>
+    );
+  }
+
   return (
     <Modal
       title="Regularisation Review"
       open={open}
       onCancel={onClose}
       width={720}
-      footer={[
-        <Button key="close" onClick={onClose}>
-          Close
-        </Button>,
-        <Button key="reject" danger onClick={handleReject} loading={loading} icon={<CloseOutlined />}>
-          Reject
-        </Button>,
-        <Button key="approve" type="primary" onClick={handleApprove} loading={loading} icon={<CheckOutlined />}>
-          {approveLabel}
-        </Button>,
-      ]}
+      footer={footer}
     >
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <Col xs={24} md={12}>
@@ -98,18 +105,20 @@ export default function RegApprovalModal({ open, reg, role, onApprove, onReject,
         </Card>
       ) : null}
 
-      <Form form={form} layout="vertical">
-        <Form.Item name="note" label="Decision Note">
-          <Input.TextArea rows={3} placeholder="Add optional approval or rejection notes" />
-        </Form.Item>
-        <Form.Item
-          name="reason"
-          label="Rejection Reason"
-          rules={[{ required: true, message: 'Rejection reason is required when rejecting' }]}
-        >
-          <Input.TextArea rows={3} placeholder="Required when rejecting" />
-        </Form.Item>
-      </Form>
+      {canReview ? (
+        <Form form={form} layout="vertical">
+          <Form.Item name="note" label="Decision Note">
+            <Input.TextArea rows={3} placeholder="Add optional approval or rejection notes" />
+          </Form.Item>
+          <Form.Item
+            name="reason"
+            label="Rejection Reason"
+            rules={[{ required: true, message: 'Rejection reason is required when rejecting' }]}
+          >
+            <Input.TextArea rows={3} placeholder="Required when rejecting" />
+          </Form.Item>
+        </Form>
+      ) : null}
     </Modal>
   );
 }

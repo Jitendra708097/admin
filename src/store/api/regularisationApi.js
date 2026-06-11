@@ -7,8 +7,8 @@ import { baseApi } from './baseApi.js';
 export const regularisationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getRegularisations: builder.query({
-      query: (params) => ({
-        url: '/regularisations/pending',
+      query: ({ reviewOnly = false, ...params } = {}) => ({
+        url: reviewOnly ? '/regularisations/pending' : '/regularisations',
         params,
       }),
       providesTags: ['Regularisations'],
@@ -34,7 +34,7 @@ export const regularisationApi = baseApi.injectEndpoints({
         method: 'PUT',
         body,
       }),
-      invalidatesTags: ['Regularisations'],
+      invalidatesTags: ['Regularisations', 'Attendance'],
     }),
   }),
   overrideExisting: false,
